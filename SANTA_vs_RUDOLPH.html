@@ -1134,11 +1134,21 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   var craterAttr = new Float32Array(vertCount);
   terrainGeo.setAttribute('aCrater', new THREE.BufferAttribute(craterAttr, 1));
 
+  // Terrain vertices under roads / sidewalks / bridges' approaches: explosions must not dig them out,
+  // otherwise the paved surface floats over a hole and players sink below the road.
+  var noDig = new Uint8Array(vertCount);
+  function markNoDig(x0, z0, x1, z1) {
+    var step = MAP_SIZE / SEGMENTS;
+    var ix0 = Math.max(0, Math.floor((Math.min(x0, x1) + HALF) / step)), ix1 = Math.min(SEGMENTS, Math.ceil((Math.max(x0, x1) + HALF) / step));
+    var iz0 = Math.max(0, Math.floor((Math.min(z0, z1) + HALF) / step)), iz1 = Math.min(SEGMENTS, Math.ceil((Math.max(z0, z1) + HALF) / step));
+    for (var iz = iz0; iz <= iz1; iz++) for (var ix = ix0; ix <= ix1; ix++) noDig[iz * GRID_W + ix] = 1;
+  }
   function rebuildTerrain() {
     mapSeed = Math.random() * 10000;
     BASES.forEach(function (b) { b.flatH = Math.max(2.5, rawHeight(b.x, b.z)); });
     FORT_DEFS.forEach(function (f) { f.flatH = Math.max(1.6, rawHeight(f.x, f.z)); });
     for (var i = 0; i < vertCount; i++) { posAttr.setY(i, generateTerrainHeight(posAttr.getX(i), posAttr.getZ(i))); craterAttr[i] = 0; }
+    noDig.fill(0);
     posAttr.needsUpdate = true; terrainGeo.attributes.aCrater.needsUpdate = true;
     terrainGeo.computeVertexNormals();
     terrainGeo.computeBoundingSphere();
@@ -1209,7 +1219,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     var minZ = Math.max(0, Math.floor((cz - radius + HALF) / step)), maxZ = Math.min(SEGMENTS, Math.ceil((cz + radius + HALF) / step));
     for (var iz = minZ; iz <= maxZ; iz++) for (var ix = minX; ix <= maxX; ix++) {
       var idx = iz * GRID_W + ix, d = Math.hypot(posAttr.getX(idx) - cx, posAttr.getZ(idx) - cz);
-      if (d < radius) {
+      if (d < radius && !noDig[idx]) {
         var f = Math.cos((d / radius) * Math.PI * 0.5);
         posAttr.setY(idx, Math.max(-7.5, posAttr.getY(idx) - depth * f * f));
         craterAttr[idx] = Math.min(1, craterAttr[idx] + f * 0.85);
@@ -2486,6 +2496,11 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     var ns = Math.max(1, Math.ceil(Math.abs(s1 - s0) / 2.5)), nt = Math.max(1, Math.ceil(Math.abs(t1 - t0) / 2.5)), flat = this.flatY;
     // winding: (b-a)x(d-a) has y = ds*dt*(uz*vx - ux*vz); keep every quad facing +Y
     var up = (s1 - s0) * (t1 - t0) * (uz * vx - ux * vz) > 0;
+    if (flat == null) { // protect the ground under this piece (+ a small margin) from craters
+      var cxs = [s0, s1, s1, s0], cts = [t0, t0, t1, t1], mnx = 1e9, mxx = -1e9, mnz = 1e9, mxz = -1e9;
+      for (var q = 0; q < 4; q++) { var qx = ax + ux * cxs[q] + vx * cts[q], qz = az + uz * cxs[q] + vz * cts[q]; mnx = Math.min(mnx, qx); mxx = Math.max(mxx, qx); mnz = Math.min(mnz, qz); mxz = Math.max(mxz, qz); }
+      markNoDig(mnx - 0.6, mnz - 0.6, mxx + 0.6, mxz + 0.6);
+    }
     function P(i, j) {
       var s = s0 + (s1 - s0) * i / ns, t = t0 + (t1 - t0) * j / nt, x = ax + ux * s + vx * t, z = az + uz * s + vz * t;
       var h = flat != null ? flat : getTerrainHeight(x, z);
