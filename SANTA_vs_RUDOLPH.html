@@ -6,7 +6,7 @@
   <title>SANTA vs RUDOLPH — Christmas Eve Snowball War</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Grenze+Gotisch:wght@600;800;900&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Luckiest+Guy&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/libs/fflate.min.js"></script>
@@ -17,7 +17,7 @@
   <style>
     :root {
       --mm: 150px;
-      --gothic: 'Grenze Gotisch', 'UnifrakturMaguntia', 'Old English Text MT', Georgia, serif;
+      --gothic: 'Luckiest Guy', 'Fredoka', 'Arial Black', sans-serif;
       --round: 'Fredoka', 'Nunito', -apple-system, 'Segoe UI', Roboto, sans-serif;
       --ink: #5a0811;
       --snow: #f6f8ff;
@@ -25,7 +25,7 @@
       --gold: #fbbf24;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
-    html, body { width: 100%; height: 100%; overflow: hidden; background: #050813; font-family: var(--round); color: #f8fafc; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #050813; font-family: var(--round); color: #f8fafc; font-synthesis: none; }
     #game-container { position: relative; width: 100%; height: 100%; }
     canvas#gl { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
     .hidden { display: none !important; }
@@ -57,7 +57,7 @@
       position: absolute; top: max(12px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%);
       display: flex; align-items: center; gap: 12px; padding: 5px 16px 6px; border-radius: 14px; pointer-events: none; z-index: 12;
     }
-    .team-score { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; font-family: var(--gothic); font-size: 19px; font-weight: 800; }
+    .team-score { display: flex; align-items: baseline; gap: 7px; white-space: nowrap; font-family: var(--gothic); font-size: 17px; font-weight: 400; letter-spacing: 0.04em; }
     .team-score .num { font-size: 23px; font-variant-numeric: tabular-nums; min-width: 34px; text-align: center; }
     .score-col { display: flex; flex-direction: column; align-items: center; gap: 3px; position: relative; z-index: 1; }
     .bar-wrap { width: 170px; height: 9px; background: rgba(40, 4, 8, 0.75); border-radius: 999px; overflow: hidden; position: relative; border: 1.5px solid rgba(255,255,255,0.8); }
@@ -98,14 +98,14 @@
     #prompt kbd { display: inline-block; min-width: 24px; padding: 1px 7px; margin-right: 7px; border-radius: 5px; background: var(--gold); color: #3b0a10; font-family: var(--round); font-weight: 700; text-align: center; }
     body.touch #prompt kbd { display: none; }
 
-    #center-msg { position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%); font-family: var(--gothic); font-size: 40px; font-weight: 900; text-align: center; z-index: 16; pointer-events: none; }
+    #center-msg { position: absolute; top: 36%; left: 50%; transform: translate(-50%, -50%); font-family: var(--gothic); font-size: 36px; letter-spacing: 0.03em; font-weight: 900; text-align: center; z-index: 16; pointer-events: none; }
     #center-msg small { display: block; font-family: var(--round); font-size: 15px; font-weight: 600; color: #e2e8f0; margin-top: 4px; text-shadow: 0 2px 6px rgba(0,0,0,0.9); }
 
     /* ---------- Vitals ---------- */
     #fps-vitals { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); left: max(14px, env(safe-area-inset-left)); border-radius: 14px; padding: 9px 13px 10px; width: 228px; z-index: 15; pointer-events: none; }
     .vital-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px; font-size: 13px; font-weight: 600; gap: 10px; }
     .vital-row span { white-space: nowrap; }
-    .vital-row .lbl { display: flex; align-items: center; gap: 6px; font-family: var(--gothic); font-size: 16px; font-weight: 800; letter-spacing: 0.02em; }
+    .vital-row .lbl { display: flex; align-items: center; gap: 6px; font-family: var(--gothic); font-size: 14px; font-weight: 400; letter-spacing: 0.04em; }
     .vital-row .lbl svg { width: 17px; height: 17px; }
     .vital-bar { width: 100%; height: 9px; background: rgba(4, 6, 14, 0.9); border: 1.5px solid rgba(246,248,255,0.75); border-radius: 999px; overflow: hidden; margin-bottom: 7px; }
     .vital-bar:last-child { margin-bottom: 0; }
@@ -127,7 +127,7 @@
     }
     .w-slot svg { width: 34px; height: 34px; position: relative; z-index: 1; }
     .w-slot .key { position: absolute; top: 3px; left: 6px; font-size: 11px; font-weight: 700; color: #cbd5e1; z-index: 1; }
-    .w-slot .w-name { font-family: var(--gothic); font-size: 15px; font-weight: 800; line-height: 1; position: relative; z-index: 1; white-space: nowrap; }
+    .w-slot .w-name { font-family: var(--gothic); font-size: 12.5px; letter-spacing: 0.03em; font-weight: 800; line-height: 1; position: relative; z-index: 1; white-space: nowrap; }
     .w-slot .pips { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px; max-width: 80px; min-height: 8px; position: relative; z-index: 1; }
     .w-slot .pips i { width: 6px; height: 6px; border-radius: 50%; background: rgba(148,163,184,0.35); }
     .w-slot .pips i.on { background: #fff; box-shadow: 0 0 4px #fff; }
@@ -140,7 +140,7 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
     }
     #make-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 9px; background: linear-gradient(180deg, rgba(255,255,255,0.55), rgba(220,232,255,0.3)); z-index: 0; }
-    #make-label { position: relative; z-index: 2; font-family: var(--gothic); font-size: 21px; font-weight: 900; line-height: 1; white-space: nowrap; }
+    #make-label { position: relative; z-index: 2; font-family: var(--gothic); font-size: 17px; letter-spacing: 0.03em; font-weight: 900; line-height: 1; white-space: nowrap; }
     #make-sub { position: relative; z-index: 2; font-size: 11px; font-weight: 600; color: #ffe4e6; white-space: nowrap; }
     #make-btn .key { position: absolute; top: 3px; right: 7px; font-size: 11px; font-weight: 700; color: #fde68a; z-index: 2; }
     #make-btn.full { filter: saturate(0.55) brightness(0.85); }
@@ -154,15 +154,15 @@
     .xmas-card .scroll { max-height: calc(92vh - 50px); overflow-y: auto; position: relative; z-index: 1; }
     .xmas-card .deco-hat { position: absolute; left: -26px; top: -30px; width: 86px; height: 86px; z-index: 3; transform: rotate(-18deg); pointer-events: none; }
     .xmas-card .deco-holly { position: absolute; right: -14px; bottom: -16px; width: 70px; height: 70px; z-index: 3; pointer-events: none; }
-    .xmas-card h1 { text-align: center; font-family: var(--gothic); font-weight: 900; font-size: 48px; line-height: 0.95; margin-bottom: 4px; }
-    .xmas-card h2 { text-align: center; font-family: var(--gothic); font-weight: 800; font-size: 24px; line-height: 1; margin-bottom: 12px; }
+    .xmas-card h1 { text-align: center; font-family: var(--gothic); font-weight: 400; font-size: 42px; letter-spacing: 0.02em; line-height: 0.95; margin-bottom: 4px; }
+    .xmas-card h2 { text-align: center; font-family: var(--gothic); font-weight: 400; font-size: 20px; letter-spacing: 0.03em; line-height: 1; margin-bottom: 12px; }
     .xmas-card p { font-size: 14px; color: #ffe9ea; line-height: 1.5; margin-bottom: 12px; text-align: center; text-shadow: 0 1px 2px rgba(60,0,6,0.8); }
     .controls-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; padding: 11px 13px; border-radius: 10px; margin-bottom: 16px; font-size: 13px; border: 2px solid rgba(246,248,255,0.65); }
     .controls-grid b { color: var(--gold); font-weight: 700; }
     body.touch .controls-grid.desk { display: none; }
     .controls-grid.mob { display: none; }
     body.touch .controls-grid.mob { display: grid; }
-    .big-btn { position: relative; width: 100%; border-radius: 14px; padding: 11px 12px 12px; font-family: var(--gothic); font-size: 28px; font-weight: 900; cursor: pointer; color: #fff; }
+    .big-btn { position: relative; width: 100%; border-radius: 14px; padding: 11px 12px 12px; font-family: var(--gothic); font-size: 24px; letter-spacing: 0.03em; font-weight: 900; cursor: pointer; color: #fff; }
     .big-btn span { position: relative; z-index: 1; }
     .big-btn:disabled { filter: grayscale(0.7) brightness(0.8); cursor: default; }
     .big-btn:active { transform: translateY(2px); }
@@ -214,7 +214,7 @@
     .team-pick { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0 14px; }
     .team-card { position: relative; border-radius: 14px; padding: 12px 8px 10px; cursor: pointer; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 4px; border: 3px solid rgba(246,248,255,0.7); box-shadow: 0 0 0 1.5px #4b5466, 0 5px 12px rgba(0,0,0,0.5); background: linear-gradient(165deg, rgba(36,44,72,0.92), rgba(6,9,20,0.95)); transition: transform 0.12s; }
     .team-card svg { width: 84px; height: 84px; }
-    .team-card .tname { font-family: var(--gothic); font-size: 26px; font-weight: 900; line-height: 1; }
+    .team-card .tname { font-family: var(--gothic); font-size: 21px; letter-spacing: 0.02em; font-weight: 900; line-height: 1; }
     .team-card .tdesc { font-size: 12px; color: #e2e8f0; font-weight: 600; text-align: center; }
     .team-card.sel { transform: translateY(-3px) scale(1.03); border-color: #fff; box-shadow: 0 0 0 2px var(--gold), 0 0 22px rgba(251,191,36,0.6), 0 6px 14px rgba(0,0,0,0.55); }
     .team-card.sel[data-team="santa"] { background: radial-gradient(120% 90% at 50% 0%, #ff6b6e 0%, #e2232c 40%, #8f0a12 100%); }
@@ -251,7 +251,7 @@
     body.touch .upg-card .uk { display: none; }
     /* level / xp */
     #xp-wrap { position: absolute; left: 50%; bottom: calc(max(14px, env(safe-area-inset-bottom)) + 104px); transform: translateX(-50%); display: flex; align-items: center; gap: 8px; padding: 3px 12px 4px; border-radius: 10px; z-index: 15; pointer-events: none; }
-    #xp-lv { font-family: var(--gothic); font-size: 17px; font-weight: 900; }
+    #xp-lv { font-family: var(--gothic); font-size: 15px; font-weight: 900; }
     #xp-track { width: 150px; height: 7px; border-radius: 99px; background: rgba(4,6,14,0.9); border: 1.5px solid rgba(246,248,255,0.75); overflow: hidden; }
     #xp-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #fde68a, #fbbf24); transition: width 0.25s; }
     .vital-bar.thin { height: 6px; }
@@ -300,7 +300,7 @@
       .upg-card .uk { width: 15px; height: 15px; font-size: 9px; top: -6px; left: -4px; }
     }
     .nick-row { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 12px; }
-    .nick-row label { font-family: var(--gothic); font-size: 22px; font-weight: 900; color: #fff; }
+    .nick-row label { font-family: var(--gothic); font-size: 18px; font-weight: 900; color: #fff; }
     #nick-input { width: 200px; max-width: 58vw; font-family: 'Fredoka', system-ui, sans-serif; font-size: 16px; font-weight: 600; color: #fff; text-align: center;
       padding: 7px 12px; border-radius: 12px; border: 3px solid rgba(246,248,255,0.85); box-shadow: 0 0 0 1.5px #4b5466, inset 0 2px 6px rgba(0,0,0,0.55);
       background: linear-gradient(180deg, rgba(8,12,28,0.92), rgba(22,30,58,0.92)); outline: none; }
@@ -342,7 +342,7 @@
     .next-info small { flex-basis: 100%; text-align: center; font-size: 11.5px; color: #e2e8f0; }
     /* rewarded revive */
     #death-panel { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 26; display: flex; flex-direction: column; align-items: center; gap: 6px; pointer-events: none; text-align: center; }
-    #death-panel .dp-title { font-family: var(--gothic); font-size: 46px; font-weight: 900; color: #fff; line-height: 1; }
+    #death-panel .dp-title { font-family: var(--gothic); font-size: 40px; font-weight: 900; color: #fff; line-height: 1; }
     .dp-ring { position: relative; width: 104px; height: 104px; }
     .dp-ring svg { width: 100%; height: 100%; filter: drop-shadow(0 0 6px rgba(0,0,0,0.6)); }
     .dp-track { fill: rgba(6,10,26,0.55); stroke: rgba(255,255,255,0.18); stroke-width: 9; }
@@ -359,6 +359,62 @@
     #revive-btn .rv-t { font-family: var(--gothic); font-size: 22px; font-weight: 900; }
     #revive-btn .rv-s { font-size: 11.5px; font-weight: 600; color: #fde68a; }
     @keyframes rvPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+    /* ---- profile strip / wardrobe / xp results / tips / mobile quick row ---- */
+    .prof-strip { display: flex; align-items: center; gap: 10px; margin: 0 auto 10px; padding: 6px 10px; border-radius: 12px; max-width: 560px; }
+    .prof-lv { flex: none; width: 46px; height: 46px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 0.9;
+      background: radial-gradient(circle at 35% 30%, #fde68a, #f59e0b 60%, #b45309); border: 2px solid #fff7e0; box-shadow: 0 2px 0 #5a2a05, 0 0 12px rgba(251,191,36,0.5); color: #3b1d05; font-family: var(--gothic); }
+    .prof-lv small { font-size: 10px; } .prof-lv b { font-size: 21px; font-weight: 400; }
+    .prof-mid { flex: 1; min-width: 0; text-align: left; }
+    .prof-mid .pm-top { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; color: #e2e8f0; }
+    .xp-track { height: 9px; border-radius: 6px; background: rgba(0,0,0,0.45); overflow: hidden; margin: 3px 0 2px; border: 1px solid rgba(255,255,255,0.18); }
+    .xp-track i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #fde047, #f59e0b); border-radius: 6px; transition: width 0.9s cubic-bezier(.2,.8,.2,1); }
+    .prof-mid .pm-daily { font-size: 11px; color: #bfe3ff; }
+    .prof-mid .pm-daily.done { color: #86efac; }
+    .wardrobe-btn { flex: none; padding: 8px 12px; border-radius: 11px; font-family: var(--gothic); font-size: 15px; letter-spacing: 0.03em; color: #fff; cursor: pointer; border: 2px solid #fff3; background: linear-gradient(#22c55e, #15803d); box-shadow: 0 3px 0 #064e1f; }
+    .wardrobe-btn .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #fde047; margin-left: 5px; vertical-align: 2px; box-shadow: 0 0 6px #fde047; }
+    #wardrobe { position: absolute; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(3,8,20,0.6); }
+    #wardrobe .xmas-card { max-width: 640px; }
+    .wd-tabs { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 8px; }
+    .wd-tabs button { padding: 6px 11px; border-radius: 10px; font-family: var(--gothic); font-size: 14px; letter-spacing: 0.03em; color: #fff; background: rgba(0,0,0,0.35); border: 2px solid rgba(255,255,255,0.18); cursor: pointer; }
+    .wd-tabs button.on { background: linear-gradient(#ffd23f, #f59e0b); color: #3b1d05; border-color: #fff7e0; }
+    .wd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; margin-bottom: 10px; }
+    .wd-item { position: relative; padding: 8px 6px 7px; border-radius: 12px; background: rgba(0,0,0,0.32); border: 2px solid rgba(255,255,255,0.14); cursor: pointer; text-align: center; color: #fff; font-family: var(--round); }
+    .wd-item .sw { width: 44px; height: 44px; border-radius: 50%; margin: 0 auto 5px; border: 3px solid rgba(255,255,255,0.85); box-shadow: inset 0 -6px 10px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.5); }
+    .wd-item .nm { font-size: 12px; font-weight: 700; line-height: 1.1; }
+    .wd-item.on { border-color: #fde047; box-shadow: 0 0 0 2px #fde04755, 0 0 14px #fde04766; }
+    .wd-item.on::after { content: '✓'; position: absolute; top: 4px; right: 7px; color: #fde047; font-weight: 900; }
+    .wd-item.locked { cursor: default; opacity: 0.62; }
+    .wd-item.locked .sw { filter: grayscale(0.85) brightness(0.6); }
+    .wd-item .lk { display: inline-block; margin-top: 3px; padding: 1px 6px; border-radius: 6px; background: rgba(0,0,0,0.5); font-size: 10.5px; font-weight: 700; color: #fde68a; }
+    .wd-item.new::before { content: 'NEW'; position: absolute; top: -7px; left: 50%; transform: translateX(-50%); padding: 0 6px; border-radius: 6px; background: #ef4444; font-size: 10px; font-weight: 800; }
+    #xp-block { margin: 6px 0 8px; padding: 8px 12px; border-radius: 12px; text-align: left; }
+    #xp-block .xp-lines { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; font-weight: 600; color: #e2e8f0; }
+    #xp-block .xp-lines b { color: #fde047; }
+    #xp-block .xp-head { display: flex; justify-content: space-between; align-items: baseline; font-family: var(--gothic); font-size: 16px; letter-spacing: 0.03em; }
+    #xp-block .xp-head span:last-child { color: #fde047; }
+    #xp-block .lvl-up { margin-top: 6px; text-align: center; font-family: var(--gothic); font-size: 22px; color: #fde047; letter-spacing: 0.03em; animation: lvlPop 0.6s cubic-bezier(.2,1.6,.4,1) both; }
+    #xp-block .unl { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 5px; }
+    #xp-block .unl span { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 10px; background: rgba(0,0,0,0.4); border: 1px solid #fde04788; font-size: 12px; font-weight: 700; }
+    #xp-block .unl i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; border: 1.5px solid #fff; }
+    @keyframes lvlPop { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    #tip { position: absolute; left: 50%; bottom: 128px; transform: translateX(-50%); z-index: 34; max-width: min(460px, 86vw); padding: 9px 14px 9px 12px; border-radius: 14px; display: flex; align-items: center; gap: 10px;
+      font-size: 15px; font-weight: 600; color: #fff; pointer-events: none; animation: tipIn 0.35s cubic-bezier(.2,1.4,.4,1) both; }
+    #tip .ti { flex: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: linear-gradient(#ffd23f, #f59e0b); color: #3b1d05; font-family: var(--gothic); font-size: 20px; box-shadow: 0 2px 0 #7a3d06; }
+    #tip b { color: #fde047; }
+    #tip kbd { display: inline-block; padding: 0 6px; border-radius: 5px; background: var(--gold); color: #3b0a10; font-family: var(--round); font-weight: 700; }
+    body.touch #tip { bottom: auto; top: 30%; font-size: 14px; }
+    @keyframes tipIn { from { transform: translate(-50%, 14px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+    .quick-row { display: none; gap: 8px; justify-content: center; margin: 0 0 10px; }
+    body.touch .quick-row { display: flex; }
+    .quick-row button { flex: 1; max-width: 140px; padding: 8px 6px; border-radius: 11px; font-family: var(--gothic); font-size: 14px; letter-spacing: 0.03em; color: #fff; cursor: pointer; border: 2px solid #fff3; background: rgba(0,0,0,0.35); }
+    .quick-row button.off { opacity: 0.55; }
+    /* mobile HUD: fewer top buttons (rest live in the pause menu), compact vitals */
+    body.touch #fs-btn, body.touch #music-btn, body.touch #mute-btn { display: none; }
+    body.touch #fps-vitals .vital-row.kd { display: none; }
+    body.touch #fps-vitals { width: 148px; }
+    body.touch .vital-row .lbl { font-size: 12.5px; }
+    @media (max-height: 520px) { .prof-strip { margin-bottom: 5px; padding: 4px 8px; } .prof-lv { width: 38px; height: 38px; } .prof-lv b { font-size: 17px; } .wd-grid { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 6px; } .wd-item .sw { width: 34px; height: 34px; } #xp-block { margin: 3px 0 5px; padding: 5px 10px; } #xp-block .lvl-up { font-size: 18px; } }
     /* underwater */
     #underwater { position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.2s; overflow: hidden;
       background: radial-gradient(ellipse at 50% 20%, rgba(60,170,210,0.22), rgba(3,32,62,0.72) 75%); }
@@ -483,7 +539,7 @@
       <div class="vital-bar"><div id="hp-fill"></div></div>
       <div class="vital-row"><span class="lbl outline"><svg viewBox="0 0 24 24"><path d="M12 2v20M3.3 7l17.4 10M3.3 17L20.7 7" stroke="#bfe8ff" stroke-width="2" stroke-linecap="round"/><path d="M9.5 3.8L12 6l2.5-2.2M9.5 20.2L12 18l2.5 2.2" stroke="#bfe8ff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg><span id="stam-label">Sprint</span></span><span id="stam-text">100%</span></div>
       <div class="vital-bar"><div id="stam-fill"></div></div>
-      <div class="vital-row" style="margin-top:2px"><span class="lbl outline"><svg viewBox="0 0 24 24"><circle cx="12" cy="16.5" r="5.5" fill="#f6f8ff"/><circle cx="12" cy="8.2" r="3.8" fill="#f6f8ff"/><path d="M8.2 6.2h7.6L12 1.5z" fill="#e11d2a"/><circle cx="12" cy="1.6" r="1.1" fill="#fff"/><path d="M12 8.6l2.6.7-2.6.6z" fill="#f97316"/><path d="M8.6 11.4c2 1 4.8 1 6.8 0" stroke="#dc2626" stroke-width="1.8" fill="none"/></svg>K / D</span><span id="kill-badge">0 / 0</span></div>
+      <div class="vital-row kd" style="margin-top:2px"><span class="lbl outline"><svg viewBox="0 0 24 24"><circle cx="12" cy="16.5" r="5.5" fill="#f6f8ff"/><circle cx="12" cy="8.2" r="3.8" fill="#f6f8ff"/><path d="M8.2 6.2h7.6L12 1.5z" fill="#e11d2a"/><circle cx="12" cy="1.6" r="1.1" fill="#fff"/><path d="M12 8.6l2.6.7-2.6.6z" fill="#f97316"/><path d="M8.6 11.4c2 1 4.8 1 6.8 0" stroke="#dc2626" stroke-width="1.8" fill="none"/></svg>K / D</span><span id="kill-badge">0 / 0</span></div>
       <div class="vital-row" style="margin-top:2px"><span class="lbl outline" id="xp-lv">LV 1</span><span id="xp-txt">0 / 2 K.O.</span></div>
       <div class="vital-bar thin"><div id="xp-fill"></div></div>
       <div id="veh-block" class="hidden">
@@ -520,6 +576,7 @@
         <div class="scroll">
           <h1 class="outline-lilac">Santa vs Rudolph</h1>
           <h2 class="outline">Choose your team</h2>
+          <div class="prof-strip glass" id="prof-strip"><div class="prof-lv"><small>LV</small><b id="pf-lv">1</b></div><div class="prof-mid"><div class="pm-top"><span id="pf-title">Snow Rookie</span><span id="pf-xp">0 / 120 XP</span></div><div class="xp-track"><i id="pf-bar"></i></div><div class="pm-daily" id="pf-daily">Daily bonus: first win +100 XP</div></div><button type="button" class="wardrobe-btn" id="wardrobe-open">Style<span class="dot hidden" id="wd-dot"></span></button></div>
           <div id="next-info" class="next-info glass"></div>
           <div class="team-pick">
             <div class="team-card sel" data-team="santa"><span class="check">✓</span><svg viewBox="0 0 64 64"><circle cx="32" cy="38" r="17" fill="#f6d3b3"/><path d="M15 40c0 14 8 20 17 20s17-6 17-20c-4 6-10 7-17 7s-13-1-17-7z" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/><path d="M22 44c3-3 7-3 10 0 3-3 7-3 10 0" stroke="#e2e8f0" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="25.5" cy="35" r="2.2" fill="#1e293b"/><circle cx="38.5" cy="35" r="2.2" fill="#1e293b"/><circle cx="32" cy="40" r="3.2" fill="#f19a8a"/><path d="M13 27C16 11 30 4 44 7c7 2 10 7 9 12-6-3-12-1-14 4z" fill="#d61f28" stroke="#5a0811" stroke-width="1.5"/><rect x="11" y="23" width="42" height="9" rx="4.5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/><circle cx="54" cy="19" r="5" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/></svg>
@@ -543,6 +600,7 @@
         <div class="scroll">
           <h1 class="outline-lilac">Paused</h1>
           <h2 class="outline">Christmas Eve Snowball War</h2>
+          <div class="quick-row"><button type="button" id="q-fs">Fullscreen</button><button type="button" id="q-music">Music</button><button type="button" id="q-sound">Sound</button></div>
           <div class="controls-grid desk glass">
             <span><b>WASD</b> Move · <b>Shift</b> Sprint</span>
             <span><b>Mouse</b> Look · <b>Click</b> Throw</span>
@@ -582,6 +640,18 @@
       <div id="upg-cards"></div>
     </div>
 
+    <div id="wardrobe" class="hidden">
+      <div class="xmas-card snow-frame glossy-red">
+        <div class="scroll">
+          <h1 class="outline-lilac">Style Locker</h1>
+          <h2 class="outline" id="wd-sub">Level up to unlock more looks</h2>
+          <div class="wd-tabs" id="wd-tabs"></div>
+          <div class="wd-grid" id="wd-grid"></div>
+          <button id="wardrobe-close" class="big-btn snow-frame glossy-red" type="button"><span class="outline">Done</span></button>
+        </div>
+      </div>
+    </div>
+    <div id="tip" class="hidden glass snow-frame"><span class="ti">!</span><span id="tip-text"></span></div>
     <div id="result" class="hidden">
       <div class="xmas-card snow-frame glossy-red" style="max-width:620px">
         <svg class="deco-hat" viewBox="0 0 64 64"><path d="M8 46C14 26 26 12 44 10c6 0 10 4 10 10-6-3-11-2-14 3-4 7-4 15-3 23z" fill="#d61f28" stroke="#5a0811" stroke-width="2"/><path d="M14 22c8-7 18-10 28-9" stroke="#ff8a8e" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/><rect x="4" y="42" width="40" height="12" rx="6" fill="#f6f8ff" stroke="#9fb0cc" stroke-width="2"/><circle cx="55" cy="22" r="7" fill="#f6f8ff" stroke="#9fb0cc" stroke-width="2"/></svg>
@@ -592,6 +662,7 @@
             <div class="col glass"><h3 class="outline">Team Santa</h3><table><thead><tr><th>Player</th><th>K</th><th>D</th></tr></thead><tbody id="board-santa"></tbody></table></div>
             <div class="col glass"><h3 class="outline">Team Rudolph</h3><table><thead><tr><th>Player</th><th>K</th><th>D</th></tr></thead><tbody id="board-rudolph"></tbody></table></div>
           </div>
+          <div id="xp-block" class="glass hidden"></div>
           <div id="next-row">
             <div class="timer" id="next-timer">Next match in 10s</div>
             <button id="next-btn" class="big-btn snow-frame glossy-red" type="button"><span class="outline">Next ›</span></button>
@@ -3655,7 +3726,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     state.making = true; state.makeT = 0; state.crunchT = 0; updateAmmoHUD();
   }
   function cancelMaking() { if (state.making) { state.making = false; state.makeT = 0; updateAmmoHUD(); } }
-  function toggleMaking() { if (state.making) cancelMaking(); else startMaking(); }
+  function toggleMaking() { if (state.making) cancelMaking(); else { startMaking(); if (state.making) tipDone('make'); } }
   function updateMaking(dt) {
     if (!state.making) return;
     var w = weapons[state.weaponKey];
@@ -3774,6 +3845,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function spawnTrooper(who) {
     var team = who.team, base = teamBase(team), S = base.side;
     var ch = createCharacter(kindOf(team));
+    if (who.looks === undefined) who.looks = randomBotLooks();
+    if (who.looks) applyLooks(ch, kindOf(team), who.looks);
     var sx, sz, sy, tries = 0;
     if (gameMode === 'ffa') { var fsp = ffaSpawnPoint(); sx = fsp.x; sz = fsp.z; sy = getTerrainHeight(sx, sz); S = Math.random() < 0.5 ? 1 : -1; }
     else do { sx = base.x + 26 * S + rand(-5, 5); sz = base.z + rand(-26, 26); sy = getTerrainHeight(sx, sz); tries++; } while (tries < 10 && circleBlocked(sx, sz, 0.8, sy, 2));
@@ -3808,7 +3881,10 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function createPlayerChar() {
     if (player.char) { if (player.char.root.parent) player.char.root.parent.remove(player.char.root); }
     player.char = createCharacter(kindOf(PT));
+    applyLooks(player.char, kindOf(PT), profile.skin);
+    var suitL = LOOK_BY[profile.skin.suit];
     gloveMat.color.setHex(kindOf(PT) === 'santa' ? 0xdc2626 : 0x6b3a1e);
+    if (kindOf(PT) === 'santa' && suitL && suitL.col) gloveMat.color.setRGB(suitL.col[0] * 0.85, suitL.col[1] * 0.85, suitL.col[2] * 0.85);
     cuffMesh.material.color.setHex(kindOf(PT) === 'santa' ? 0xf8fafc : 0xc9915b);
     worldGroup.add(player.char.root);
   }
@@ -3849,7 +3925,9 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (opts && opts.fx && opts.fx.fire && !orient) { // burning snowball: flickering halo that travels with the ball
       fireGlow = new THREE.Sprite(fireGlowMat); var gs = (1.5 + 0.25 * opts.fx.fire) / Math.max(0.05, radius); fireGlow.scale.set(gs, gs, 1); fireGlow.userData.s = gs; m.add(fireGlow);
     }
-    snowballs.push({ fireGlow: fireGlow, mesh: m, x: ox, y: oy, z: oz, vx: vx, vy: vy, vz: vz, r: radius, team: team, isPlayer: isPlayer, damage: damage, craterR: craterR, craterD: craterD, grav: grav, life: 5.0, owner: owner || null, boom: (opts && opts.boom) || null, fx: (opts && opts.fx) || null, trail: !!(opts && opts.trail), orient: orient, src: (opts && opts.src) || 'snow', bounces: (opts && opts.fx && opts.fx.bounce) || 0 });
+    var skinTrail = null;
+    if (isPlayer && !orient && !(opts && opts.model)) { var tl = LOOK_BY[profile.skin.trail]; if (tl && tl.id !== 'trail_none') skinTrail = tl; }
+    snowballs.push({ skinTrail: skinTrail, fireGlow: fireGlow, mesh: m, x: ox, y: oy, z: oz, vx: vx, vy: vy, vz: vz, r: radius, team: team, isPlayer: isPlayer, damage: damage, craterR: craterR, craterD: craterD, grav: grav, life: 5.0, owner: owner || null, boom: (opts && opts.boom) || null, fx: (opts && opts.fx) || null, trail: !!(opts && opts.trail), orient: orient, src: (opts && opts.src) || 'snow', bounces: (opts && opts.fx && opts.fx.bounce) || 0 });
   }
   var _aimPt = new V3(), _aimDir = new V3();
   function getAimDir(out) {
@@ -3941,6 +4019,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (w.sound) playShot(w.sound); else playThrow(state.weaponKey === 'mega' ? 'mega' : 'single');
     if (player.char) { player.char.throwT = w.kind === 'gun' ? 0 : 1; player.throwFaceT = 0.6; }
     if (w.kind === 'melee') meleeSwing(w); else emitVolley(w);
+    if (!w.special) tipDone('throw');
     if (w.kind === 'gun') { game.shake = Math.max(game.shake, w.boom ? 0.25 : 0.08); state.pitch = clamp(state.pitch + (w.boom ? 0.03 : 0.008), -1.25, 1.15); }
     if (w.special && w.ammo <= 0) { delete weapons.special; addKillFeed(w.name + ' used up', PT === 'santa'); $('slot-special').classList.add('hidden'); switchWeapon('single'); }
     else if (w.ammo <= 0) startMaking();
@@ -4064,7 +4143,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function seatOffset(ch) { return ch.rig ? (ch.rig.type === 'biped' ? -ch.rig.hipsH * 0.92 : -0.3) : -1.0; }
   function enterVehicle(v) {
     if (player.hasFlag) { flashPrompt("Can't ride while carrying the flag"); return; }
-    player.vehicle = v; v.driver = 'player'; v.idleT = 0;
+    player.vehicle = v; v.driver = 'player'; v.idleT = 0; tipDone('ride');
     if (player.char) {
       var ch = player.char, rig = ch.rig;
       v.rider.add(ch.root);
@@ -4442,6 +4521,260 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (e.code === 'Tab' && game.started && !game.over && !e.repeat) showScoreboard(true);
   }, true);
 
+  // =========================================================
+  // Profile: saved XP / level, unlockable looks, first-match tips
+  // =========================================================
+  var PROFILE_KEY = 'svr_profile_v1', XP_MAX_LVL = 40;
+  var profile = { xp: 0, lvl: 1, matches: 0, wins: 0, kos: 0, skin: { suit: 'suit_classic', fur: 'fur_classic', nose: 'nose_red', trail: 'trail_none' }, tips: {}, dayWin: '', seen: {} };
+  function xpNeed(l) { return 120 + 40 * (l - 1); }
+  var LOOKS = [
+    { id: 'suit_classic', cat: 'suit', name: 'Classic Red', lvl: 1, sw: '#d61f28' },
+    { id: 'suit_green', cat: 'suit', name: 'Evergreen', lvl: 3, sw: '#1f8a3f', col: [0.11, 0.56, 0.24] },
+    { id: 'suit_blue', cat: 'suit', name: 'Royal Blue', lvl: 6, sw: '#2450d8', col: [0.14, 0.31, 0.86] },
+    { id: 'suit_pink', cat: 'suit', name: 'Candy Pink', lvl: 11, sw: '#ec5aa8', col: [0.93, 0.35, 0.66] },
+    { id: 'suit_midnight', cat: 'suit', name: 'Midnight', lvl: 16, sw: '#3a2a5e', col: [0.24, 0.17, 0.4] },
+    { id: 'suit_gold', cat: 'suit', name: 'Golden', lvl: 21, sw: '#e0a91e', col: [0.95, 0.7, 0.14] },
+    { id: 'suit_white', cat: 'suit', name: 'Snow White', lvl: 27, sw: '#eef4ff', col: [0.95, 0.97, 1.0] },
+    { id: 'fur_classic', cat: 'fur', name: 'Classic', lvl: 1, sw: '#a89a8a' },
+    { id: 'fur_arctic', cat: 'fur', name: 'Arctic', lvl: 5, sw: '#f3f6fb', mode: 'light' },
+    { id: 'fur_choco', cat: 'fur', name: 'Chocolate', lvl: 9, sw: '#6b4128', col: [0.62, 0.43, 0.3] },
+    { id: 'fur_gold', cat: 'fur', name: 'Golden', lvl: 13, sw: '#e2b25a', col: [1.12, 0.86, 0.46] },
+    { id: 'fur_frost', cat: 'fur', name: 'Frost', lvl: 18, sw: '#9fc0ff', col: [0.66, 0.8, 1.12] },
+    { id: 'fur_shadow', cat: 'fur', name: 'Shadow', lvl: 24, sw: '#4a4560', col: [0.42, 0.4, 0.56] },
+    { id: 'nose_red', cat: 'nose', name: 'Classic Red', lvl: 1, sw: '#ff2020', hex: 0xff2020 },
+    { id: 'nose_blue', cat: 'nose', name: 'Ice Blue', lvl: 2, sw: '#3b82f6', hex: 0x3b8bff },
+    { id: 'nose_green', cat: 'nose', name: 'Elf Green', lvl: 7, sw: '#22c55e', hex: 0x22e05e },
+    { id: 'nose_gold', cat: 'nose', name: 'Gold', lvl: 12, sw: '#fbbf24', hex: 0xffc21a },
+    { id: 'nose_purple', cat: 'nose', name: 'Purple', lvl: 17, sw: '#a855f7', hex: 0xb05cff },
+    { id: 'nose_rainbow', cat: 'nose', name: 'Rainbow', lvl: 30, sw: 'conic-gradient(#f43f5e,#f59e0b,#eab308,#22c55e,#3b82f6,#a855f7,#f43f5e)', rainbow: true },
+    { id: 'trail_none', cat: 'trail', name: 'No Trail', lvl: 1, sw: '#cbd5e1' },
+    { id: 'trail_candy', cat: 'trail', name: 'Candy Cane', lvl: 4, sw: 'repeating-linear-gradient(45deg,#ef4444 0 6px,#fff 6px 12px)', cols: [[1, 0.15, 0.15], [1, 1, 1]] },
+    { id: 'trail_frost', cat: 'trail', name: 'Frost', lvl: 8, sw: '#93c5fd', cols: [[0.55, 0.8, 1]] },
+    { id: 'trail_elf', cat: 'trail', name: 'Elf Magic', lvl: 15, sw: '#4ade80', cols: [[0.3, 1, 0.45], [1, 0.85, 0.2]] },
+    { id: 'trail_gold', cat: 'trail', name: 'Gold Dust', lvl: 20, sw: '#fcd34d', cols: [[1, 0.8, 0.25]] },
+    { id: 'trail_rainbow', cat: 'trail', name: 'Rainbow', lvl: 23, sw: 'conic-gradient(#f43f5e,#f59e0b,#eab308,#22c55e,#3b82f6,#a855f7,#f43f5e)', rainbow: true }
+  ];
+  var LOOK_BY = {}; LOOKS.forEach(function (l) { LOOK_BY[l.id] = l; });
+  var LOOK_CATS = [{ id: 'suit', name: 'Santa Suit' }, { id: 'fur', name: 'Reindeer Fur' }, { id: 'nose', name: 'Rudolph Nose' }, { id: 'trail', name: 'Snowball Trail' }];
+  var TITLES = [[1, 'Snow Rookie'], [3, 'Flurry Fighter'], [6, 'Snowball Scout'], [10, 'Frost Ranger'], [15, 'Blizzard Captain'], [20, 'Avalanche Ace'], [25, 'North Pole Legend'], [30, 'Spirit of Christmas']];
+  function titleFor(l) { var t = TITLES[0][1]; TITLES.forEach(function (x) { if (l >= x[0]) t = x[1]; }); return t; }
+  function lookUnlocked(l) { return l && profile.lvl >= l.lvl; }
+  function cgData() { try { return CG.sdk && CG.sdk.data && CG.sdk.data.getItem ? CG.sdk.data : null; } catch (e) { return null; } }
+  function readProfileStr(src) { try { return src ? src.getItem(PROFILE_KEY) : null; } catch (e) { return null; } }
+  function applyProfileData(o) {
+    if (!o || typeof o !== 'object') return;
+    profile.xp = Math.max(0, +o.xp || 0); profile.lvl = clamp(Math.floor(+o.lvl || 1), 1, XP_MAX_LVL);
+    profile.matches = +o.matches || 0; profile.wins = +o.wins || 0; profile.kos = +o.kos || 0;
+    profile.dayWin = String(o.dayWin || ''); profile.tips = o.tips && typeof o.tips === 'object' ? o.tips : {}; profile.seen = o.seen && typeof o.seen === 'object' ? o.seen : {};
+    if (o.skin) ['suit', 'fur', 'nose', 'trail'].forEach(function (c) { var l = LOOK_BY[o.skin[c]]; if (l && l.cat === c && lookUnlocked(l)) profile.skin[c] = l.id; });
+  }
+  function totalXP(p) { var t = p.xp || 0; for (var l = 1; l < (p.lvl || 1); l++) t += xpNeed(l); return t; }
+  function loadProfile() {
+    var best = null;
+    [window.localStorage, cgData()].forEach(function (src) {
+      var s = readProfileStr(src); if (!s) return;
+      try { var o = JSON.parse(s); if (!best || totalXP(o) > totalXP(best)) best = o; } catch (e) { }
+    });
+    if (best) applyProfileData(best);
+  }
+  function saveProfile() {
+    var s = JSON.stringify(profile);
+    try { localStorage.setItem(PROFILE_KEY, s); } catch (e) { }
+    try { var d = cgData(); if (d && d.setItem) d.setItem(PROFILE_KEY, s); } catch (e) { }
+  }
+  function todayKey() { var d = new Date(); return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+  function newLooksCount() { var n = 0; LOOKS.forEach(function (l) { if (l.lvl > 1 && lookUnlocked(l) && !profile.seen[l.id]) n++; }); return n; }
+  function renderProfileStrip() {
+    var need = xpNeed(profile.lvl), maxed = profile.lvl >= XP_MAX_LVL;
+    $('pf-lv').textContent = String(profile.lvl); $('pf-title').textContent = titleFor(profile.lvl);
+    $('pf-xp').textContent = maxed ? 'MAX LEVEL' : (profile.xp + ' / ' + need + ' XP');
+    var bar = $('pf-bar'); if (bar) bar.style.width = (maxed ? 100 : Math.min(100, profile.xp / need * 100)) + '%';
+    var done = profile.dayWin === todayKey(), dl = $('pf-daily');
+    if (dl) { dl.textContent = done ? 'Daily first-win bonus claimed ✓ — back tomorrow!' : 'Daily bonus: first win today +100 XP'; dl.classList.toggle('done', done); }
+    $('wd-dot').classList.toggle('hidden', newLooksCount() === 0);
+  }
+  // XP for a finished match; returns what the results card shows
+  function awardMatchXP(res) {
+    var lines = [], add = function (label, v) { if (v > 0) lines.push([label, v]); };
+    add('Match played', 50);
+    add(me.kills + ' K.O.' + (me.kills === 1 ? '' : 's'), me.kills * 12);
+    if (res === 'win') add('Victory', 40); else if (res === 'draw') add(gameMode === 'ffa' ? 'Top 3' : 'Draw', 20);
+    var tk = todayKey();
+    if (res === 'win' && profile.dayWin !== tk) { add('First win today', 100); profile.dayWin = tk; }
+    var total = 0; lines.forEach(function (l) { total += l[1]; });
+    var oldLvl = profile.lvl, oldXp = profile.xp, unlocks = [];
+    profile.xp += total; profile.matches++; profile.kos += me.kills; if (res === 'win') profile.wins++;
+    while (profile.lvl < XP_MAX_LVL && profile.xp >= xpNeed(profile.lvl)) {
+      profile.xp -= xpNeed(profile.lvl); profile.lvl++;
+      LOOKS.forEach(function (l) { if (l.lvl === profile.lvl) unlocks.push(l); });
+    }
+    if (profile.lvl >= XP_MAX_LVL) profile.xp = 0;
+    saveProfile();
+    return { lines: lines, total: total, oldLvl: oldLvl, oldXp: oldXp, unlocks: unlocks };
+  }
+  function swatchStyle(l) { return /gradient/.test(l.sw) ? 'background:' + l.sw : 'background:' + l.sw; }
+  function showMatchXP(r) {
+    var el = $('xp-block'); if (!el) return;
+    var need = xpNeed(profile.lvl), maxed = profile.lvl >= XP_MAX_LVL;
+    var html = '<div class="xp-head"><span>LV ' + profile.lvl + ' · ' + escHtml(titleFor(profile.lvl)) + '</span><span>+' + r.total + ' XP</span></div>';
+    html += '<div class="xp-track"><i id="xp-res-bar"></i></div>';
+    html += '<div class="xp-lines">' + r.lines.map(function (l) { return '<span>' + escHtml(l[0]) + ' <b>+' + l[1] + '</b></span>'; }).join('') + '</div>';
+    if (profile.lvl > r.oldLvl) {
+      html += '<div class="lvl-up outline">Level up! LV ' + profile.lvl + '</div>';
+      if (r.unlocks.length) html += '<div class="unl">' + r.unlocks.map(function (l) { return '<span><i style="' + swatchStyle(l) + '"></i>' + escHtml(l.name) + ' · ' + catName(l.cat) + '</span>'; }).join('') + '</div>';
+    }
+    el.innerHTML = html; el.classList.remove('hidden');
+    var bar = $('xp-res-bar');
+    var from = profile.lvl > r.oldLvl ? 0 : r.oldXp / need * 100, to = maxed ? 100 : profile.xp / need * 100;
+    bar.style.transition = 'none'; bar.style.width = from + '%';
+    setTimeout(function () { bar.style.transition = ''; bar.style.width = Math.min(100, to) + '%'; }, 120);
+    if (profile.lvl > r.oldLvl) playBell(1568, 0.08, audioCtx ? audioCtx.currentTime + 0.45 : 0);
+  }
+  function catName(c) { for (var i = 0; i < LOOK_CATS.length; i++) if (LOOK_CATS[i].id === c) return LOOK_CATS[i].name; return c; }
+  // ---- Style locker
+  var wdCat = 'suit';
+  function renderWardrobe() {
+    $('wd-tabs').innerHTML = LOOK_CATS.map(function (c) { return '<button type="button" data-cat="' + c.id + '" class="' + (c.id === wdCat ? 'on' : '') + '">' + c.name + '</button>'; }).join('');
+    $('wd-grid').innerHTML = LOOKS.filter(function (l) { return l.cat === wdCat; }).map(function (l) {
+      var un = lookUnlocked(l), on = profile.skin[l.cat] === l.id, nw = un && l.lvl > 1 && !profile.seen[l.id];
+      return '<div class="wd-item' + (on ? ' on' : '') + (un ? '' : ' locked') + (nw ? ' new' : '') + '" data-id="' + l.id + '"><div class="sw" style="' + swatchStyle(l) + '"></div><div class="nm">' + escHtml(l.name) + '</div>' + (un ? '' : '<span class="lk">LV ' + l.lvl + '</span>') + '</div>';
+    }).join('');
+    $('wd-sub').textContent = ('LV ' + profile.lvl + ' · ' + LOOKS.filter(lookUnlocked).length + ' / ' + LOOKS.length + ' looks unlocked');
+  }
+  function openWardrobe() { renderWardrobe(); $('wardrobe').classList.remove('hidden'); }
+  function closeWardrobe() {
+    LOOKS.forEach(function (l) { if (lookUnlocked(l)) profile.seen[l.id] = 1; });
+    saveProfile(); $('wardrobe').classList.add('hidden'); renderProfileStrip();
+  }
+  $('wardrobe-open').addEventListener('click', function () { initAudio(); openWardrobe(); });
+  $('wardrobe-close').addEventListener('click', closeWardrobe);
+  $('wd-tabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button[data-cat]'); if (!b) return;
+    LOOKS.forEach(function (l) { if (l.cat === wdCat && lookUnlocked(l)) profile.seen[l.id] = 1; });
+    wdCat = b.getAttribute('data-cat'); renderWardrobe();
+  });
+  $('wd-grid').addEventListener('click', function (e) {
+    var it = e.target.closest('.wd-item'); if (!it) return;
+    var l = LOOK_BY[it.getAttribute('data-id')]; if (!l || !lookUnlocked(l)) return;
+    profile.skin[l.cat] = l.id; profile.seen[l.id] = 1; saveProfile(); renderWardrobe(); playBell(1318, 0.05);
+  });
+  // ---- Applying looks to characters
+  var skinTexCache = {}, rainbowMats = [];
+  function recolorTexture(base, look, kind) {
+    var key = kind + '|' + look.id;
+    if (skinTexCache[key] !== undefined) return skinTexCache[key];
+    var out = null;
+    try {
+      var im = base && base.image;
+      if (im && im.width && typeof document !== 'undefined') {
+        var cv = document.createElement('canvas'); cv.width = im.width; cv.height = im.height;
+        var g = cv.getContext('2d');
+        if (g && g.getImageData) {
+          g.drawImage(im, 0, 0); var D = g.getImageData(0, 0, cv.width, cv.height), d = D.data;
+          for (var i = 0; i < d.length; i += 4) {
+            var r = d[i], gg = d[i + 1], b = d[i + 2];
+            if (kind === 'suit') {
+              if (!(r > gg * 1.6 && r > b * 1.4 && r - gg > 60)) continue; // only the red suit
+              var k = Math.min(1.3, r / 200), c = look.col;
+              d[i] = Math.min(255, c[0] * 235 * k); d[i + 1] = Math.min(255, c[1] * 235 * k); d[i + 2] = Math.min(255, c[2] * 235 * k);
+            } else {
+              if (r + gg + b < 70) continue; // keep the dark atlas background, eyes & hooves
+              if (look.mode === 'light') { var lum = 0.3 * r + 0.55 * gg + 0.15 * b; d[i] = Math.min(255, lum * 0.55 + 140); d[i + 1] = Math.min(255, lum * 0.55 + 145); d[i + 2] = Math.min(255, lum * 0.55 + 152); }
+              else { var cc = look.col; d[i] = Math.min(255, r * cc[0]); d[i + 1] = Math.min(255, gg * cc[1]); d[i + 2] = Math.min(255, b * cc[2]); }
+            }
+          }
+          g.putImageData(D, 0, 0);
+          out = new THREE.CanvasTexture(cv);
+          out.flipY = base.flipY; out.wrapS = base.wrapS; out.wrapT = base.wrapT; out.magFilter = base.magFilter; out.minFilter = base.minFilter;
+          out.generateMipmaps = base.generateMipmaps; if (base.encoding !== undefined) out.encoding = base.encoding; out.needsUpdate = true;
+        }
+      }
+    } catch (e) { out = null; }
+    skinTexCache[key] = out;
+    return out;
+  }
+  function applyLooks(ch, kind, skin) {
+    if (!ch || !skin) return;
+    var cat = kind === 'santa' ? 'suit' : 'fur', look = LOOK_BY[skin[cat]];
+    if (look && look.lvl > 1) {
+      ch.root.traverse(function (o) {
+        if (!o.isMesh || !o.material || Array.isArray(o.material) || !o.material.map || o.userData.isNose) return;
+        var t = recolorTexture(o.material.map, look, cat); if (!t || !o.material.clone) return;
+        o.material = o.material.clone(); o.material.map = t;
+      });
+    }
+    if (kind === 'rudolph' && ch.nose) {
+      var nl = LOOK_BY[skin.nose];
+      if (nl && nl.id !== 'nose_red') {
+        var mesh = null, spr = ch.nose.sprite;
+        ch.nose.group.children.forEach(function (c) { if (c.isMesh) mesh = c; });
+        if (!spr.material.clone || (mesh && !mesh.material.clone)) return;
+        if (mesh) { mesh.material = mesh.material.clone(); }
+        spr.material = spr.material.clone();
+        if (nl.rainbow) { ch.nose.rainbow = true; if (mesh) rainbowMats.push(mesh.material); rainbowMats.push(spr.material); ch.nose.rgb = [1, 0.5, 0.2]; }
+        else {
+          var col = new THREE.Color(nl.hex);
+          if (mesh) { mesh.material.color.copy(col); mesh.material.emissive.copy(col); }
+          spr.material.color.copy(col); ch.nose.rgb = [col.r, col.g, col.b];
+        }
+      }
+    }
+  }
+  function randomBotLooks() {
+    if (Math.random() < 0.45) return null; // plenty of classic looks so custom ones stand out
+    var cap = 1 + Math.floor(Math.pow(Math.random(), 1.6) * 30), pick = function (cat) {
+      var opts = LOOKS.filter(function (l) { return l.cat === cat && l.lvl <= cap; }); return opts[Math.floor(Math.random() * opts.length)].id;
+    };
+    return { suit: pick('suit'), fur: pick('fur'), nose: pick('nose'), trail: 'trail_none' };
+  }
+  var _rbC = new THREE.Color();
+  function tickRainbow() {
+    if (!rainbowMats.length) return;
+    _rbC.setHSL((game.time * 0.35) % 1, 1, 0.55);
+    for (var i = 0; i < rainbowMats.length; i++) { var m = rainbowMats[i]; m.color.copy(_rbC); if (m.emissive) m.emissive.copy(_rbC); }
+  }
+  function trailColor(look) {
+    if (look.rainbow) { _rbC.setHSL((game.time * 1.3 + Math.random() * 0.2) % 1, 1, 0.6); return [_rbC.r, _rbC.g, _rbC.b]; }
+    return look.cols[Math.floor(Math.random() * look.cols.length)];
+  }
+  // ---- First-match tips (each disappears for good once the player does it)
+  var TIPS = {
+    throw: { pc: '<b>Click</b> to throw a snowball — aim a little higher to throw farther', touch: 'Tap the <b>red button</b> to throw — aim a little higher to throw farther', icon: '1' },
+    make: { pc: 'Running low? Press <kbd>R</kbd> to <b>pack more snowballs</b>', touch: 'Running low? Tap <b>Make Snowball</b> to pack more', icon: '2' },
+    ride: { pc: 'Press <kbd>F</kbd> to <b>hop in</b> — vehicles are fast and hit hard', touch: 'Tap the <b>car button</b> to hop in — vehicles are fast and hit hard', icon: '3' }
+  };
+  var tipState = { id: null, t: 0, shown: {} };
+  function showTip(id) {
+    if (profile.tips[id] || tipState.id === id || tipState.shown[id]) return;
+    tipState.id = id; tipState.t = 0; tipState.shown[id] = 1;
+    $('tip-text').innerHTML = TOUCH ? TIPS[id].touch : TIPS[id].pc;
+    $('tip').querySelector('.ti').textContent = TIPS[id].icon;
+    var el = $('tip'); el.classList.add('hidden'); void el.offsetWidth; el.classList.remove('hidden');
+  }
+  function hideTip() { tipState.id = null; var el = $('tip'); if (el) el.classList.add('hidden'); }
+  function tipDone(id) {
+    if (!profile.tips[id]) { profile.tips[id] = 1; saveProfile(); }
+    if (tipState.id === id) hideTip();
+  }
+  function updateTips(dt) {
+    if (player.dead || game.choosing || game.over || !game.started) { if (tipState.id) hideTip(); return; }
+    if (tipState.id) { tipState.t += dt; if (tipState.t > 10) hideTip(); return; }
+    if (game.matchTime > 1.2 && !profile.tips.throw) { showTip('throw'); return; }
+    var w = weapons.single;
+    if (!profile.tips.make && profile.tips.throw && w && w.ammo <= 3 && !state.making) { showTip('make'); return; }
+    if (!profile.tips.ride && !player.vehicle && game.matchTime > 4 && nearestVehicle(9)) { showTip('ride'); return; }
+  }
+  // ---- Mobile: fullscreen / music / sound live in the pause menu
+  function syncQuickRow() {
+    var mb = $('music-btn'), sb = $('mute-btn');
+    if ($('q-music') && mb) $('q-music').classList.toggle('off', mb.classList.contains('off'));
+    if ($('q-sound') && sb) $('q-sound').classList.toggle('off', sb.classList.contains('off'));
+  }
+  [['q-fs', 'fs-btn'], ['q-music', 'music-btn'], ['q-sound', 'mute-btn']].forEach(function (p) {
+    var q = $(p[0]); if (q) q.addEventListener('click', function (e) { e.stopPropagation(); var o = $(p[1]); if (o) o.click(); setTimeout(syncQuickRow, 50); });
+  });
+  loadProfile(); renderProfileStrip();
+
   // ---- Settings (pause menu): look sensitivity, FOV, graphics, shadows, invert Y, FPS counter
   function applySettings() {
     camera.fov = settings.fov; camera.updateProjectionMatrix();
@@ -4651,6 +4984,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function setPaused(p) {
     game.paused = p;
     $('overlay').classList.toggle('hidden', !p);
+    if (p) { syncQuickRow(); hideTip(); }
     if (p) { $('start-label').textContent = 'Resume'; state.mouseDown = false; state.keys = {}; if (document.exitPointerLock && document.pointerLockElement) document.exitPointerLock(); setEngine(0, 60); }
   }
   $('start-btn').addEventListener('click', function () { initAudio(); if (TOUCH) enterFullscreen(); setPaused(false); requestLock(); $('overlay').querySelector('h1').textContent = 'Paused'; });
@@ -4927,6 +5261,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   // =========================================================
   function resetMatch(team) {
     if (team === 'santa' || team === 'rudolph') playerSide = team;
+    rainbowMats.length = 0; tipState.shown = {}; hideTip();
     applyMap(MAPS[nextMapId]); gameMode = nextModeId;
     teamKind = {};
     if (gameMode === 'ffa') { PT = 'p0'; teamKind.p0 = playerSide; } else PT = playerSide;
@@ -4984,6 +5319,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       });
     }
     rollNext(false);
+    hideTip(); showMatchXP(awardMatchXP(res));
     $('result').classList.remove('hidden');
     if (res === 'win') { cgCall('game', 'happytime'); playBell(1046, 0.08); playBell(1318, 0.08, audioCtx ? audioCtx.currentTime + 0.15 : 0); playBell(1568, 0.08, audioCtx ? audioCtx.currentTime + 0.3 : 0); }
     for (var i = 0; i < 6; i++) spawnSnowSplash(player.x + rand(-6, 6), player.y + 3, player.z + rand(-6, 6), 12, true);
@@ -5018,7 +5354,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     renderLobby();
   }
   function showTeamScreen() {
-    churnLobby(1 + Math.floor(Math.random() * 3)); lobbyNew = {}; renderLobby(); renderNextInfo();
+    churnLobby(1 + Math.floor(Math.random() * 3)); lobbyNew = {}; renderLobby(); renderNextInfo(); renderProfileStrip(); hideTip();
     game.menu = true; game.started = false; game.over = false; game.choosing = false; game.countdown = 0;
     $('result').classList.add('hidden'); $('upgrade').classList.add('hidden'); $('team-screen').classList.remove('hidden');
     setHidden('center-msg', true);
@@ -5314,7 +5650,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
         var pulse = 0.82 + 0.25 * Math.sin(game.time * 5 + ch.nose.phase);
         ch.nose.sprite.scale.set(pulse, pulse, 1);
         var dc = (u.x - camera.position.x) * (u.x - camera.position.x) + (u.z - camera.position.z) * (u.z - camera.position.z);
-        if (dc < 3600) pushDynPool(u.x - Math.sin(u.yaw) * 1.2, u.y, u.z - Math.cos(u.yaw) * 1.2, 3.6, 0.95 * pulse, 0.08, 0.06);
+        if (dc < 3600) { var nrgb = ch.nose.rainbow ? [_rbC.r, _rbC.g, _rbC.b] : (ch.nose.rgb || [0.95, 0.08, 0.06]); pushDynPool(u.x - Math.sin(u.yaw) * 1.2, u.y, u.z - Math.cos(u.yaw) * 1.2, 3.6, nrgb[0] * pulse, nrgb[1] * pulse, nrgb[2] * pulse); }
       }
       // hp bar
       var bar = u.bar, showBar = u.hp < u.maxHp;
@@ -5400,6 +5736,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
         else if (p.fx.frost) emitSpark(p.x, p.y, p.z, 0.5, 0.85, 1, -0.3);
         else if (p.fx.homing) emitSpark(p.x, p.y, p.z, 0.75, 0.4, 1, 0.2);
       }
+      if (p.skinTrail && Math.random() < 0.8) { var tc = trailColor(p.skinTrail); emitSpark(p.x + rand(-0.08, 0.08), p.y + rand(-0.08, 0.08), p.z + rand(-0.08, 0.08), tc[0], tc[1], tc[2], 0.15); }
       if (p.fireGlow) { var fk = p.fireGlow.userData.s * (0.85 + 0.3 * Math.random()); p.fireGlow.scale.set(fk, fk, 1); }
       if (p.trail) emitSpark(p.x, p.y, p.z, 0.75, 0.6, 0.5, 1.2);
       p.vy -= p.grav * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.life -= dt; p.age = (p.age || 0) + dt;
@@ -5723,7 +6060,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function update(dt) {
     game.time += dt;
     waterU.uTime.value = game.time; waterU.uFogDensity.value = scene.fog.density; skyMat.uniforms.uTime.value = game.time;
-    musicTick();
+    musicTick(); tickRainbow();
     var live = game.ready && game.started && !game.paused && !game.over && !game.adPlaying;
     if (live && game.countdown > 0) {
       game.countdown -= dt;
@@ -5753,6 +6090,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       updatePickups(dt);
       updateGifts(dt);
       if (promptTimer > 0) { promptTimer -= dt; if (promptTimer <= 0) setHidden('prompt', true); }
+      updateTips(dt);
     } else if (game.ready && !game.started) {
       // title-screen camera drift around the Santa base
       state.yaw += dt * 0.06;
@@ -5808,7 +6146,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     setTimeout(fin, 4000);
     try {
       S.init().then(function () {
-        if (S.environment && S.environment !== 'disabled') { CG.sdk = S; CG.on = S.environment === 'crazygames'; }
+        if (S.environment && S.environment !== 'disabled') { CG.sdk = S; CG.on = S.environment === 'crazygames'; try { loadProfile(); renderProfileStrip(); } catch (e) { } }
         fin();
       }, function () { fin(); });
     } catch (e) { fin(); }
