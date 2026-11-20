@@ -1,0 +1,29 @@
+name: CrazyGames build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['SANTA_vs_RUDOLPH.html', 'tools/make_crazygames.py']
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Inline three.js + fonts
+        run: python tools/make_crazygames.py SANTA_vs_RUDOLPH.html dist
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="crazygames-$(date -u +%Y%m%d-%H%M)-${GITHUB_SHA::7}"
+          gh release create "$TAG" dist/santa-vs-rudolph-crazygames.zip dist/index.html \
+            --title "CrazyGames upload $TAG" \
+            --notes "Upload santa-vs-rudolph-crazygames.zip in the CrazyGames Developer Portal (HTML5)."
