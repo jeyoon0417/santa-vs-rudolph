@@ -3688,6 +3688,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   var icicleMat = new THREE.MeshStandardMaterial({ color: 0xbfe8ff, roughness: 0.2, emissive: 0x3aa0ff, emissiveIntensity: 0.9 });
   var bombBallMat = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.5, emissive: 0xff5a1f, emissiveIntensity: 0.55 });
   var fireBallMat = new THREE.MeshStandardMaterial({ color: 0xffb347, roughness: 0.5, emissive: 0xff4500, emissiveIntensity: 1.2 });
+  var fireGlowMat = new THREE.SpriteMaterial({ map: glowTex, color: 0xff7a1a, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.95 });
   var frostBallMat = new THREE.MeshStandardMaterial({ color: 0xd6f4ff, roughness: 0.25, emissive: 0x38bdf8, emissiveIntensity: 0.9 });
   var zapBallMat = new THREE.MeshStandardMaterial({ color: 0xfff7c2, roughness: 0.4, emissive: 0xfacc15, emissiveIntensity: 1.1 });
   var magicBallMat = new THREE.MeshStandardMaterial({ color: 0xf3e8ff, roughness: 0.4, emissive: 0xa855f7, emissiveIntensity: 1.0 });
@@ -3836,7 +3837,11 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (opts && opts.model && protos.wpn[opts.model] && protos.wpn[opts.model].userData.fitted) { m = protos.wpn[opts.model].clone(true); orient = true; m.lookAt(ox + vx, oy + vy, oz + vz); }
     else { m = new THREE.Mesh(ballGeo, (opts && opts.mat) || ballMat); m.scale.setScalar(radius); }
     m.position.set(ox, oy, oz); scene.add(m);
-    snowballs.push({ mesh: m, x: ox, y: oy, z: oz, vx: vx, vy: vy, vz: vz, r: radius, team: team, isPlayer: isPlayer, damage: damage, craterR: craterR, craterD: craterD, grav: grav, life: 5.0, owner: owner || null, boom: (opts && opts.boom) || null, fx: (opts && opts.fx) || null, trail: !!(opts && opts.trail), orient: orient, src: (opts && opts.src) || 'snow', bounces: (opts && opts.fx && opts.fx.bounce) || 0 });
+    var fireGlow = null;
+    if (opts && opts.fx && opts.fx.fire && !orient) { // burning snowball: flickering halo that travels with the ball
+      fireGlow = new THREE.Sprite(fireGlowMat); var gs = (1.5 + 0.25 * opts.fx.fire) / Math.max(0.05, radius); fireGlow.scale.set(gs, gs, 1); fireGlow.userData.s = gs; m.add(fireGlow);
+    }
+    snowballs.push({ fireGlow: fireGlow, mesh: m, x: ox, y: oy, z: oz, vx: vx, vy: vy, vz: vz, r: radius, team: team, isPlayer: isPlayer, damage: damage, craterR: craterR, craterD: craterD, grav: grav, life: 5.0, owner: owner || null, boom: (opts && opts.boom) || null, fx: (opts && opts.fx) || null, trail: !!(opts && opts.trail), orient: orient, src: (opts && opts.src) || 'snow', bounces: (opts && opts.fx && opts.fx.bounce) || 0 });
   }
   var _aimPt = new V3(), _aimDir = new V3();
   function getAimDir(out) {
@@ -4354,7 +4359,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   }
 
   // Generic glowing sparks
-  var SPK_N = 400, spkPos = new Float32Array(SPK_N * 3), spkCol = new Float32Array(SPK_N * 3), spkBase = new Float32Array(SPK_N * 3), spkLife = new Float32Array(SPK_N), spkVy = new Float32Array(SPK_N), spkHead = 0;
+  var SPK_N = 900, spkPos = new Float32Array(SPK_N * 3), spkCol = new Float32Array(SPK_N * 3), spkBase = new Float32Array(SPK_N * 3), spkLife = new Float32Array(SPK_N), spkVy = new Float32Array(SPK_N), spkHead = 0;
   var spkGeo = new THREE.BufferGeometry();
   spkGeo.setAttribute('position', new THREE.BufferAttribute(spkPos, 3)); spkGeo.setAttribute('color', new THREE.BufferAttribute(spkCol, 3));
   var spkPoints = new THREE.Points(spkGeo, new THREE.PointsMaterial({ size: 0.7, map: glowTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
@@ -5028,7 +5033,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (player.shieldT > 0) player.shieldT -= dt;
     if (player.burnT > 0) {
       player.burnT -= dt; damagePlayer(player.burnDps * dt, player.burnBy, 'fire');
-      if (Math.random() < dt * 12) emitSpark(player.x + rand(-0.4, 0.4), player.y + rand(0.3, 2), player.z + rand(-0.4, 0.4), 1, 0.42, 0.08, 2.5);
+      for (var pf = 0; pf < 2; pf++) if (Math.random() < dt * 18) emitSpark(player.x + rand(-0.45, 0.45), player.y + rand(0.3, 2), player.z + rand(-0.45, 0.45), 1, pf ? 0.7 : 0.42, pf ? 0.18 : 0.08, 2.5);
       if (player.dead) return;
     }
     if (player.slowT > 0) player.slowT -= dt;
@@ -5204,7 +5209,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       // --- status effects from upgraded snowballs
       if (u.burnT > 0) {
         u.burnT -= dt; damageUnit(u, u.burnDps * dt, u.burnTeam || enemyOf(u.team), false, u.burnBy || null, 'fire');
-        if (Math.random() < dt * 14) emitSpark(u.x + rand(-0.4, 0.4), u.y + rand(0.4, 2.2), u.z + rand(-0.4, 0.4), 1, 0.42, 0.08, 2.5);
+        for (var bf = 0; bf < 2; bf++) if (Math.random() < dt * 22) emitSpark(u.x + rand(-0.45, 0.45), u.y + rand(0.3, 2.2), u.z + rand(-0.45, 0.45), 1, bf ? 0.7 : 0.42, bf ? 0.18 : 0.08, 2.5);
         if (u.dead) continue;
       }
       if (u.slowT > 0) { u.slowT -= dt; if (Math.random() < dt * 6) emitSpark(u.x + rand(-0.5, 0.5), u.y + rand(0.3, 2), u.z + rand(-0.5, 0.5), 0.55, 0.85, 1, 0.6); }
@@ -5378,11 +5383,16 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
         }
       }
       if (p.fx && Math.random() < 0.7) {
-        if (p.fx.fire) emitSpark(p.x, p.y, p.z, 1, 0.45, 0.08, 0.5);
+        if (p.fx.fire) {
+          emitSpark(p.x, p.y, p.z, 1, 0.45, 0.08, 0.5);
+          emitSpark(p.x + rand(-0.15, 0.15), p.y + rand(-0.1, 0.2), p.z + rand(-0.15, 0.15), 1, 0.75, 0.2, 1.4);
+          if (Math.random() < 0.5) emitSpark(p.x - p.vx * 0.012, p.y - p.vy * 0.012, p.z - p.vz * 0.012, 0.9, 0.25, 0.04, 0.9);
+        }
         else if (p.fx.zap) emitSpark(p.x, p.y, p.z, 1, 0.9, 0.3, 0.2);
         else if (p.fx.frost) emitSpark(p.x, p.y, p.z, 0.5, 0.85, 1, -0.3);
         else if (p.fx.homing) emitSpark(p.x, p.y, p.z, 0.75, 0.4, 1, 0.2);
       }
+      if (p.fireGlow) { var fk = p.fireGlow.userData.s * (0.85 + 0.3 * Math.random()); p.fireGlow.scale.set(fk, fk, 1); }
       if (p.trail) emitSpark(p.x, p.y, p.z, 0.75, 0.6, 0.5, 1.2);
       p.vy -= p.grav * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.z += p.vz * dt; p.life -= dt; p.age = (p.age || 0) + dt;
       p.mesh.position.set(p.x, p.y, p.z);
