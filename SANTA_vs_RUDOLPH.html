@@ -362,8 +362,16 @@
     /* underwater */
     #underwater { position: absolute; inset: 0; pointer-events: none; z-index: 2; opacity: 0; transition: opacity 0.2s; overflow: hidden;
       background: radial-gradient(ellipse at 50% 20%, rgba(60,170,210,0.22), rgba(3,32,62,0.72) 75%); }
-    #underwater::after { content: ''; position: absolute; inset: -30%; background: repeating-linear-gradient(112deg, rgba(170,225,255,0.07) 0 16px, transparent 16px 46px), repeating-linear-gradient(68deg, rgba(170,225,255,0.05) 0 10px, transparent 10px 38px); animation: caust 2.6s linear infinite; }
-    @keyframes caust { from { transform: translate(0, 0); } to { transform: translate(46px, 12px); } }
+    /* soft drifting light patches + faint light shafts (no hard stripes) */
+    #underwater::before { content: ''; position: absolute; inset: -20% -10% 30% -10%; filter: blur(18px); opacity: 0.55;
+      background: linear-gradient(100deg, transparent 18%, rgba(150,215,255,0.16) 24%, transparent 31%, transparent 46%, rgba(150,215,255,0.12) 52%, transparent 60%, transparent 70%, rgba(150,215,255,0.14) 76%, transparent 84%);
+      animation: uwShaft 7s ease-in-out infinite alternate; }
+    #underwater::after { content: ''; position: absolute; inset: -15%; filter: blur(26px); opacity: 0.6;
+      background: radial-gradient(circle at 20% 30%, rgba(160,225,255,0.18), transparent 22%), radial-gradient(circle at 70% 25%, rgba(160,225,255,0.14), transparent 20%),
+        radial-gradient(circle at 45% 60%, rgba(160,225,255,0.10), transparent 25%), radial-gradient(circle at 85% 70%, rgba(160,225,255,0.12), transparent 18%);
+      animation: uwDrift 9s ease-in-out infinite alternate; }
+    @keyframes uwDrift { from { transform: translate(-3%, -2%) scale(1); } to { transform: translate(3%, 2%) scale(1.08); } }
+    @keyframes uwShaft { from { transform: translateX(-4%) skewX(-4deg); } to { transform: translateX(4%) skewX(4deg); } }
     body.underwater #underwater { opacity: 1; }
     @media (max-height: 520px) { .next-info { margin-bottom: 4px; padding: 2px 10px; } .next-info b { font-size: 15px; } .next-info small { display: none; } .team-card svg { display: none; } .team-card { padding-top: 4px; } #revive-btn .rv-t { font-size: 17px; } #revive-btn { padding: 6px 16px 7px; } #death-panel { gap: 3px; } #death-panel .dp-title { font-size: 32px; } .dp-ring { width: 76px; height: 76px; } #dp-sec { font-size: 30px; } #dp-sub { font-size: 11px; } #no-thanks { padding: 3px 12px; font-size: 12px; } }
     /* settings (pause menu) */
