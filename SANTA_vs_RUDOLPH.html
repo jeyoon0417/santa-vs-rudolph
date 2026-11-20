@@ -1463,6 +1463,55 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       return t;
     } catch (e) { return null; }
   }
+  // Finds the lit blobs of a "Warm lights" mask and maps them back onto the model surface (UV → triangle → position),
+  // so each window/headlight gets a soft additive glow sprite at night.
+  function windowGlowSpots(root, lightTex, factor, isCar) {
+    try {
+      var img = lightTex.image; if (!img || !img.width || typeof document === 'undefined') return null;
+      var W = img.width, H = img.height, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var g = cv.getContext('2d'); if (!g || !g.getImageData) return null;
+      g.drawImage(img, 0, 0); var D = g.getImageData(0, 0, W, H).data, seen = new Uint8Array(W * H), comps = [];
+      function lum(i) { return D[i * 4] * 0.3 + D[i * 4 + 1] * 0.55 + D[i * 4 + 2] * 0.15; }
+      for (var p0 = 0; p0 < W * H; p0++) {
+        if (seen[p0] || lum(p0) < 70) continue;
+        var stack = [p0], n = 0, sx = 0, sy = 0, r = 0, gg = 0, b = 0; seen[p0] = 1;
+        while (stack.length) {
+          var q = stack.pop(), x = q % W, y = (q / W) | 0; n++; sx += x; sy += y; r += D[q * 4]; gg += D[q * 4 + 1]; b += D[q * 4 + 2];
+          var nb = [x > 0 ? q - 1 : -1, x < W - 1 ? q + 1 : -1, y > 0 ? q - W : -1, y < H - 1 ? q + W : -1];
+          for (var k = 0; k < 4; k++) { var t = nb[k]; if (t >= 0 && !seen[t] && lum(t) >= 70) { seen[t] = 1; stack.push(t); } }
+        }
+        if (n < 3 || n > 900) continue; // specks and big colour swatches stay emissive-only
+        comps.push({ u: (sx / n + 0.5) / W, v: (sy / n + 0.5) / H, r: r / n / 255, g: gg / n / 255, b: b / n / 255 });
+      }
+      if (!comps.length) return null;
+      var out = [], f = factor || { r: 0.8, g: 0.7, b: 0.55 };
+      var va = new V3(), vb = new V3(), vc = new V3(), e1 = new V3(), e2 = new V3(), nrm = new V3(), pos = new V3();
+      root.traverse(function (m) {
+        if (!m.isMesh || !m.geometry || !m.geometry.attributes.uv) return;
+        var P = m.geometry.attributes.position, UV = m.geometry.attributes.uv, I = m.geometry.index;
+        var triN = I ? I.count / 3 : P.count / 3;
+        for (var t = 0; t < triN; t++) {
+          var i0 = I ? I.getX(t * 3) : t * 3, i1 = I ? I.getX(t * 3 + 1) : t * 3 + 1, i2 = I ? I.getX(t * 3 + 2) : t * 3 + 2;
+          var u0 = UV.getX(i0), v0 = UV.getY(i0), u1 = UV.getX(i1), v1 = UV.getY(i1), u2 = UV.getX(i2), v2 = UV.getY(i2);
+          var minU = Math.min(u0, u1, u2), maxU = Math.max(u0, u1, u2), minV = Math.min(v0, v1, v2), maxV = Math.max(v0, v1, v2);
+          var den = (v1 - v2) * (u0 - u2) + (u2 - u1) * (v0 - v2); if (Math.abs(den) < 1e-9) continue;
+          for (var c = 0; c < comps.length; c++) {
+            var C = comps[c]; if (C.u < minU || C.u > maxU || C.v < minV || C.v > maxV) continue;
+            var w0 = ((v1 - v2) * (C.u - u2) + (u2 - u1) * (C.v - v2)) / den, w1 = ((v2 - v0) * (C.u - u2) + (u0 - u2) * (C.v - v2)) / den, w2 = 1 - w0 - w1;
+            if (w0 < -0.001 || w1 < -0.001 || w2 < -0.001) continue;
+            va.fromBufferAttribute(P, i0).applyMatrix4(m.matrixWorld); vb.fromBufferAttribute(P, i1).applyMatrix4(m.matrixWorld); vc.fromBufferAttribute(P, i2).applyMatrix4(m.matrixWorld);
+            e1.subVectors(vb, va); e2.subVectors(vc, va); nrm.crossVectors(e1, e2); if (nrm.lengthSq() < 1e-10) continue; nrm.normalize();
+            pos.set(0, 0, 0).addScaledVector(va, w0).addScaledVector(vb, w1).addScaledVector(vc, w2).addScaledVector(nrm, isCar ? 0.12 : 0.3);
+            var dup = false;
+            for (var o = Math.max(0, out.length - 40); o < out.length; o++) { var Q0 = out[o]; if (Math.abs(Q0.x - pos.x) + Math.abs(Q0.y - pos.y) + Math.abs(Q0.z - pos.z) < 0.35) { dup = true; break; } }
+            if (!dup) out.push({ x: pos.x, y: pos.y, z: pos.z, r: Math.min(1, C.r * f.r * 1.6), g: Math.min(1, C.g * f.g * 1.6), b: Math.min(1, C.b * f.b * 1.6) });
+            if (out.length > 600) return;
+          }
+        }
+      });
+      return out.length ? out : null;
+    } catch (err) { return null; }
+  }
   function b64ToBuf(b64) { var bin = atob(b64), n = bin.length, bytes = new Uint8Array(n); for (var i = 0; i < n; i++) bytes[i] = bin.charCodeAt(i); return bytes.buffer; }
   function loadPS1Tex(dataUrl, repeat) {
     var t = new THREE.TextureLoader().load(dataUrl);
@@ -1955,7 +2004,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       pending++;
       try {
         gltfLoader.parse(b64ToBuf(A[k]), '', function (gltf) {
-          var root = new THREE.Group(); root.add(gltf.scene);
+          var root = new THREE.Group(), glowSrc = null; root.add(gltf.scene);
           gltf.scene.traverse(function (c) {
             if (!c.isMesh) return;
             c.castShadow = true; c.receiveShadow = true;
@@ -1964,7 +2013,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
               if (mt.map) {
                 mt.map.magFilter = THREE.NearestFilter; mt.map.minFilter = THREE.NearestFilter; mt.map.generateMipmaps = false; mt.map.needsUpdate = true;
                 var baseK = mk[1] === 'town' ? 0.24 : 0.14;
-                var lit = mt.emissiveMap ? bakeWarmEmissive(mt.map, mt.emissiveMap, mt.emissive, baseK, mk[1] === 'town' ? 1.55 : 1.4) : null;
+                var lit = mt.emissiveMap ? bakeWarmEmissive(mt.map, mt.emissiveMap, mt.emissive, baseK, mk[1] === 'town' ? 2.3 : 1.25) : null;
+                if (mt.emissiveMap && !glowSrc) glowSrc = { tex: mt.emissiveMap, f: mt.emissive.clone() };
                 if (lit) { mt.emissive = new THREE.Color(0xffffff); mt.emissiveMap = lit; mt.emissiveIntensity = 1; }
                 else if (mt.emissiveMap) {
                   mt.emissiveMap.magFilter = mt.emissiveMap.minFilter = THREE.NearestFilter; mt.emissiveMap.generateMipmaps = false; mt.emissiveMap.needsUpdate = true;
@@ -1975,6 +2025,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
             });
           });
           root.updateMatrixWorld(true);
+          if (glowSrc) { root.userData.glow = windowGlowSpots(root, glowSrc.tex, glowSrc.f, mk[1] === 'car'); if (root.userData.glow) root.userData.glow.isCar = mk[1] === 'car'; }
           var bb = new THREE.Box3().setFromObject(root);
           var e = { id: mk[2], obj: root, min: bb.min.clone(), max: bb.max.clone(), size: bb.getSize(new V3()) };
           var c0 = mk[2].charAt(0);
@@ -2701,7 +2752,31 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     _m1.compose(new V3(x, y, z), new Q().setFromEuler(new THREE.Euler(0, rot, 0)), new V3(s, s, s));
     l.push(_m1.clone());
   }
-  function instFlush(parent, inst, shadow) { inst.forEach(function (l, proto) { if (l.length) parent.add(buildInstanced(proto, l, shadow)); }); }
+  var _gv = null;
+  function instFlush(parent, inst, shadow) {
+    var gp = [], gc = [], cp = [], cc = [];
+    if (!_gv) _gv = new V3();
+    inst.forEach(function (l, proto) {
+      if (!l.length) return;
+      parent.add(buildInstanced(proto, l, shadow));
+      var G = proto.userData && proto.userData.glow; if (!G) return;
+      var car = G.isCar, P = car ? cp : gp, C = car ? cc : gc;
+      for (var i = 0; i < l.length; i++) for (var k = 0; k < G.length; k++) {
+        _gv.set(G[k].x, G[k].y, G[k].z).applyMatrix4(l[i]);
+        P.push(_gv.x, _gv.y, _gv.z); C.push(G[k].r, G[k].g, G[k].b);
+      }
+    });
+    if (gp.length) parent.add(makeGlowPoints(gp, gc, 2.1, 0.7));
+    if (cp.length) parent.add(makeGlowPoints(cp, cc, 1.3, 0.6));
+  }
+  function makeGlowPoints(P, C, size, op) {
+    var g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+    g.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
+    var m = new THREE.PointsMaterial({ size: size, map: glowTex, vertexColors: true, transparent: true, opacity: op, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+    var pts = new THREE.Points(g, m); pts.frustumCulled = false; pts.renderOrder = 2;
+    return pts;
+  }
   // Place a model so that its footprint centre lands on (cx, cz) and its front faces dir (rot)
   function placeModel(inst, e, cx, cz, rot, s, opts) {
     var y = opts && opts.y != null ? opts.y : getTerrainHeight(cx, cz);
