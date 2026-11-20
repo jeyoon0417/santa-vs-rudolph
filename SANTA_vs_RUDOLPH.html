@@ -410,7 +410,7 @@
     .quick-row button { flex: 1; max-width: 140px; padding: 8px 6px; border-radius: 11px; font-family: var(--gothic); font-size: 14px; letter-spacing: 0.03em; color: #fff; cursor: pointer; border: 2px solid #fff3; background: rgba(0,0,0,0.35); }
     .quick-row button.off { opacity: 0.55; }
     /* mobile HUD: fewer top buttons (rest live in the pause menu), compact vitals */
-    body.touch #fs-btn, body.touch #music-btn, body.touch #mute-btn { display: none; }
+    body.touch #music-btn, body.touch #mute-btn { display: none; }
     body.touch #fps-vitals .vital-row.kd { display: none; }
     body.touch #fps-vitals { width: 148px; }
     body.touch .vital-row .lbl { font-size: 12.5px; }
@@ -600,7 +600,7 @@
         <div class="scroll">
           <h1 class="outline-lilac">Paused</h1>
           <h2 class="outline">Christmas Eve Snowball War</h2>
-          <div class="quick-row"><button type="button" id="q-fs">Fullscreen</button><button type="button" id="q-music">Music</button><button type="button" id="q-sound">Sound</button></div>
+          <div class="quick-row"><button type="button" id="q-music">Music</button><button type="button" id="q-sound">Sound</button></div>
           <div class="controls-grid desk glass">
             <span><b>WASD</b> Move · <b>Shift</b> Sprint</span>
             <span><b>Mouse</b> Look · <b>Click</b> Throw</span>
