@@ -48,6 +48,14 @@
       box-shadow: inset 0 -8px 14px rgba(60,0,6,0.45), inset 0 2px 0 rgba(255,255,255,0.45);
     }
     .glossy-red::after { content: ''; position: absolute; left: 7%; right: 7%; top: 5%; height: 42%; border-radius: 999px 999px 40% 40%; background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.04)); pointer-events: none; }
+    #net-status { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; background: rgba(4,8,20,0.45); }
+    #net-status.hidden { display: none; }
+    #net-status .ns-box { display: flex; align-items: center; gap: 12px; padding: 16px 24px; border-radius: 14px; font-size: 18px; font-weight: 600; color: #e2e8f0; }
+    .ns-spin { width: 20px; height: 20px; border-radius: 50%; border: 3px solid rgba(255,255,255,0.25); border-top-color: #4ade80; animation: nsspin 0.8s linear infinite; }
+    @keyframes nsspin { to { transform: rotate(360deg); } }
+    #net-badge { position: absolute; left: 50%; top: calc(max(8px, env(safe-area-inset-top)) + 66px); transform: translateX(-50%); z-index: 12; pointer-events: none; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; color: #bbf7d0; background: rgba(6,40,24,0.6); border: 1px solid rgba(74,222,128,0.45); padding: 2px 9px; border-radius: 999px; }
+    #net-badge::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #4ade80; margin-right: 6px; vertical-align: 1px; box-shadow: 0 0 6px #4ade80; }
+    #net-badge.hidden { display: none; }
     .glass { background: linear-gradient(165deg, rgba(36,44,72,0.9), rgba(6,9,20,0.93)); }
 
     #damage-vignette { position: absolute; inset: 0; pointer-events: none; z-index: 8; opacity: 0; background: radial-gradient(circle, transparent 55%, rgba(220, 38, 38, 0.55) 100%); transition: opacity 0.2s; }
@@ -513,6 +521,7 @@
       <svg viewBox="0 0 30 30" stroke="#fbbf24" stroke-width="2.6" stroke-linecap="round"><path d="M5 5l6 6M25 5l-6 6M5 25l6-6M25 25l-6-6"/></svg>
     </div>
     <div id="prompt" class="hidden glass snow-frame"></div>
+    <div id="net-badge" class="hidden"></div>
     <div id="center-msg" class="hidden outline"></div>
 
     <div id="touch-controls">
@@ -593,6 +602,7 @@
       </div>
     </div>
 
+    <div id="net-status" class="hidden"><div class="ns-box glass snow-frame"><span class="ns-spin"></span><span id="net-status-text">Finding players…</span></div></div>
     <div id="overlay" class="hidden">
       <div class="xmas-card snow-frame glossy-red">
         <svg class="deco-hat" viewBox="0 0 64 64"><path d="M8 46C14 26 26 12 44 10c6 0 10 4 10 10-6-3-11-2-14 3-4 7-4 15-3 23z" fill="#d61f28" stroke="#5a0811" stroke-width="2"/><path d="M14 22c8-7 18-10 28-9" stroke="#ff8a8e" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.7"/><rect x="4" y="42" width="40" height="12" rx="6" fill="#f6f8ff" stroke="#9fb0cc" stroke-width="2"/><circle cx="55" cy="22" r="7" fill="#f6f8ff" stroke="#9fb0cc" stroke-width="2"/></svg>
@@ -1286,6 +1296,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
            (posAttr.getY(i00 + GRID_W) * (1 - fx) + posAttr.getY(i00 + GRID_W + 1) * fx) * fz;
   }
   function deformTerrain(cx, cz, radius, depth) {
+    if (NET.role === 'client' && !NET.applying) return; // craters come from the host
+    if (NET.role === 'host') { var dfa = [Math.round(cx * 100) / 100, Math.round(cz * 100) / 100, Math.round(radius * 100) / 100, Math.round(depth * 100) / 100]; NET.deforms.push(dfa); if (NET.deforms.length > 4000) NET.deforms.shift(); netAll({ t: 'df', a: dfa }); }
     var step = MAP_SIZE / SEGMENTS;
     var minX = Math.max(0, Math.floor((cx - radius + HALF) / step)), maxX = Math.min(SEGMENTS, Math.ceil((cx + radius + HALF) / step));
     var minZ = Math.max(0, Math.floor((cz - radius + HALF) / step)), maxZ = Math.min(SEGMENTS, Math.ceil((cz + radius + HALF) / step));
@@ -3374,7 +3386,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function scoreKill(team) { if (gameMode === 'conquest') addTeamScore(team, 3); else if (gameMode === 'tdm') addTeamScore(team, 1); }
   function ffaLeader() { var b = null; roster.forEach(function (r) { if (!b || r.kills > b.kills) b = r; }); return b; }
   function checkModeEnd() {
-    if (game.over) return;
+    if (game.over || netClient()) return;
     if (gameMode === 'tdm' && (game.santaScore >= MODES.tdm.goal || game.rudolphScore >= MODES.tdm.goal)) endMatch();
     else if (gameMode === 'ctf' && (game.santaScore >= MODES.ctf.goal || game.rudolphScore >= MODES.ctf.goal)) endMatch();
     else if (gameMode === 'ffa') { var L = ffaLeader(); if (L && L.kills >= MODES.ffa.goal) endMatch(); }
@@ -3426,7 +3438,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     f.carrier = c; f.dropped = false;
     if (c === 'player') { player.hasFlag = f; flashPrompt('You have the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag! Bring it home'); playBell(1318, 0.08); playBell(1760, 0.06, audioCtx ? audioCtx.currentTime + 0.12 : 0); }
     else { c.hasFlag = f; c.hp = c.maxHp; c.throwStop = 0; setGoal(c, flagOf(c.team).home.x, flagOf(c.team).home.z); c.state = 'move'; }
-    addKillFeed(carrierName(c) + ' took the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag!', carrierTeam(c) === 'santa');
+    addKillFeed(carrierName(c) + ' took the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag!', carrierTeam(c) === 'santa', 1);
     if (f.team === PT && c !== 'player') playThud(0.7);
   }
   function dropFlag(f) {
@@ -3434,18 +3446,18 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (c === 'player') player.hasFlag = null; else c.hasFlag = null;
     f.carrier = null; f.dropped = true; f.returnT = 20;
     f.x = p.x; f.z = p.z; f.y = Math.max(supportHeight(p.x, p.z, p.y + 1, 0.5), WATER_Y - 0.2) + 0.2;
-    addKillFeed('The ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag was dropped', f.team === 'santa');
+    addKillFeed('The ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag was dropped', f.team === 'santa', 1);
   }
   function returnFlag(f, who) {
     if (f.carrier) { if (f.carrier === 'player') player.hasFlag = null; else f.carrier.hasFlag = null; }
     f.carrier = null; f.dropped = false; f.x = f.home.x; f.y = f.home.y; f.z = f.home.z;
-    if (who !== false) addKillFeed((who ? who.name + ' returned' : 'Returned') + ' the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag', f.team === 'santa');
+    if (who !== false) addKillFeed((who ? who.name + ' returned' : 'Returned') + ' the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag', f.team === 'santa', 1);
   }
   function captureFlag(f, c) {
     var team = carrierTeam(c), who = c === 'player' ? me : c.who;
     addTeamScore(team, 1); who.caps = (who.caps || 0) + 1;
     returnFlag(f, false);
-    addKillFeed(who.name + ' captured the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag!', team === 'santa');
+    addKillFeed(who.name + ' captured the ' + (f.team === 'santa' ? 'Santa' : 'Rudolph') + ' flag!', team === 'santa', 1);
     if (team === PT) { playBell(1046, 0.09); playBell(1318, 0.09, audioCtx ? audioCtx.currentTime + 0.12 : 0); playBell(1568, 0.09, audioCtx ? audioCtx.currentTime + 0.24 : 0); }
     else playThud(0.9);
     for (var i = 0; i < 4; i++) spawnSnowSplash(f.home.x + rand(-3, 3), f.home.y + 2, f.home.z + rand(-3, 3), 10, true);
@@ -3799,14 +3811,16 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     s.scale.set(3.25, 0.49, 1); s.renderOrder = 6; s.visible = false;
     return { sprite: s, ctx: c.getContext('2d'), tex: tex, key: '' };
   }
-  function drawNameTag(tag, name, ally, lv) {
-    var key = name + '|' + ally + '|' + lv; if (tag.key === key) return; tag.key = key;
+  function drawNameTag(tag, name, ally, lv, human) {
+    var key = name + '|' + ally + '|' + lv + '|' + (human ? 1 : 0); if (tag.key === key) return; tag.key = key;
     var g = tag.ctx; g.clearRect(0, 0, 320, 48);
     g.font = '600 26px Fredoka, "Trebuchet MS", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
     var badge = lv > 0 ? 'Lv' + (lv + 1) + ' ' : '', bw = badge ? g.measureText(badge).width : 0, nw = g.measureText(name).width;
-    var botW = 44, x0 = 160 - (botW + bw + nw) / 2;
-    g.fillStyle = 'rgba(30,41,59,0.85)'; g.beginPath(); if (g.roundRect) g.roundRect(x0, 12, botW - 6, 26, 6); else g.rect(x0, 12, botW - 6, 26); g.fill();
-    g.font = '700 16px Fredoka, "Trebuchet MS", sans-serif'; g.fillStyle = '#cbd5e1'; g.textAlign = 'center'; g.fillText('BOT', x0 + (botW - 6) / 2, 26);
+    var botW = human ? 0 : 44, x0 = 160 - (botW + bw + nw) / 2;
+    if (!human) {
+      g.fillStyle = 'rgba(30,41,59,0.85)'; g.beginPath(); if (g.roundRect) g.roundRect(x0, 12, botW - 6, 26, 6); else g.rect(x0, 12, botW - 6, 26); g.fill();
+      g.font = '700 16px Fredoka, "Trebuchet MS", sans-serif'; g.fillStyle = '#cbd5e1'; g.textAlign = 'center'; g.fillText('BOT', x0 + (botW - 6) / 2, 26);
+    }
     g.font = '600 26px Fredoka, "Trebuchet MS", sans-serif'; x0 += botW;
     g.lineJoin = 'round'; g.lineWidth = 6; g.strokeStyle = 'rgba(0,0,0,0.85)';
     g.textAlign = 'left';
@@ -3822,7 +3836,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       u.ch.root.getWorldPosition(_tagP);
       var d = camera.position.distanceTo(_tagP), ally = u.team === PT;
       if (d > (ally ? 90 : 60)) { tag.sprite.visible = false; continue; }
-      drawNameTag(tag, u.who.name, ally, u.who.level || 0);
+      drawNameTag(tag, u.who.name, ally, u.who.level || 0, !!u.who.human);
       var k = clamp(d / 22, 0.8, 2.4);
       tag.sprite.scale.set(3.25 * k, 0.49 * k, 1);
       tag.sprite.position.set(_tagP.x, _tagP.y + (u.vehicle ? 2.6 : 3.2) + 0.25 * k + (u.bar.sprite.visible ? 0.25 : 0), _tagP.z);
@@ -3855,10 +3869,14 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     var tag = makeNameTag(); worldGroup.add(tag.sprite);
     var u = { team: team, x: sx, y: sy, z: sz, vx: 0, vz: 0, yaw: S > 0 ? -Math.PI / 2 : Math.PI / 2, hp: 75, maxHp: 75,
       reload: rand(0.8, 2.0), ch: ch, bar: bar, tag: tag, goal: null, state: 'move', holdT: 0, avoidT: 0, avoidAng: 0, stuckT: 0, lastX: sx, lastZ: sz,
-      target: null, targetT: 0, throwStop: 0, dead: false, deadT: 0, hitT: 0, who: who };
+      target: null, targetT: 0, throwStop: 0, dead: false, deadT: 0, hitT: 0, who: who, nid: NET.nidSeq++ };
     who.unit = u;
     pickGoal(u);
-    if (Math.random() < 0.45) {
+    if (who.net && NET.role === 'host') {
+      // a real player's seat: their own device moves them; 100 hp like any player
+      u.net = who.net; u.hp = u.maxHp = 100; u.net.st = null; u.net.stAt = game.time;
+      if (!NET.quiet) netTo(who.net.id, { t: 'spawn', x: q2(sx), y: q2(sy), z: q2(sz), yaw: q2(u.yaw) });
+    } else if (NET.role !== 'client' && Math.random() < 0.45) {
       var cands = vehicles.filter(function (v) { return vehUsable(v, team) && !v.dead && !v.driver && !v.claimed && Math.hypot(v.x - sx, v.z - sz) < 48; });
       if (cands.length) { var cv = cands[Math.floor(Math.random() * cands.length)]; cv.claimed = u; u.vehTarget = cv; u.state = 'toVeh'; }
     }
@@ -3889,6 +3907,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     worldGroup.add(player.char.root);
   }
   function spawnPlayer() {
+    NET.hostNid = NET.nidSeq++;
     var b = teamBase(PT);
     player.x = b.x + 24 * b.side; player.z = b.z + rand(-3, 3);
     if (gameMode === 'ffa') { var fsp = ffaSpawnPoint(); player.x = fsp.x; player.z = fsp.z; }
@@ -3927,6 +3946,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     }
     var skinTrail = null;
     if (isPlayer && !orient && !(opts && opts.model)) { var tl = LOOK_BY[profile.skin.trail]; if (tl && tl.id !== 'trail_none') skinTrail = tl; }
+    if (NET.role === 'host') hostQueueThrow(ox, oy, oz, vx, vy, vz, team, radius, craterR, grav, owner, opts);
+    else if (NET.role === 'client' && isPlayer) clientSendThrow(ox, oy, oz, vx, vy, vz, damage, radius, craterR, craterD, grav, opts);
     snowballs.push({ skinTrail: skinTrail, fireGlow: fireGlow, mesh: m, x: ox, y: oy, z: oz, vx: vx, vy: vy, vz: vz, r: radius, team: team, isPlayer: isPlayer, damage: damage, craterR: craterR, craterD: craterD, grav: grav, life: 5.0, owner: owner || null, boom: (opts && opts.boom) || null, fx: (opts && opts.fx) || null, trail: !!(opts && opts.trail), orient: orient, src: (opts && opts.src) || 'snow', bounces: (opts && opts.fx && opts.fx.bounce) || 0 });
   }
   var _aimPt = new V3(), _aimDir = new V3();
@@ -4005,6 +4026,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       u.vx += dx / (d || 1) * 16; u.vz += dz / (d || 1) * 16; u.hitT = 0.3;
       spawnSnowSplash(u.x, u.y + 1.3, u.z, 8, true);
     });
+    if (netClient()) netUp({ t: 'melee' });
     if (hitAny) { playBell(620, 0.1); playThud(0.9); game.shake = Math.max(game.shake, 0.2); } else playThrow('single');
   }
   function firePlayerWeapon() {
@@ -4021,12 +4043,13 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (w.kind === 'melee') meleeSwing(w); else emitVolley(w);
     if (!w.special) tipDone('throw');
     if (w.kind === 'gun') { game.shake = Math.max(game.shake, w.boom ? 0.25 : 0.08); state.pitch = clamp(state.pitch + (w.boom ? 0.03 : 0.008), -1.25, 1.15); }
-    if (w.special && w.ammo <= 0) { delete weapons.special; addKillFeed(w.name + ' used up', PT === 'santa'); $('slot-special').classList.add('hidden'); switchWeapon('single'); }
+    if (w.special && w.ammo <= 0) { if (netClient()) netUp({ t: 'spec0' }); delete weapons.special; addKillFeed(w.name + ' used up', PT === 'santa'); $('slot-special').classList.add('hidden'); switchWeapon('single'); }
     else if (w.ammo <= 0) startMaking();
     updateAmmoHUD();
   }
-  function giveSpecial() {
-    var def = SPECIALS[Math.floor(Math.random() * SPECIALS.length)], w = {};
+  function giveSpecial() { giveSpecialDef(SPECIALS[Math.floor(Math.random() * SPECIALS.length)]); }
+  function giveSpecialDef(def) {
+    var w = {};
     for (var k in def) w[k] = def[k];
     w.special = true; w.maxAmmo = def.uses; w.ammo = def.uses;
     weapons.special = w;
@@ -4041,13 +4064,11 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (!v || v.type !== 'sleigh' || !v.flying || player.bombs <= 0 || player.bombCd > 0 || game.paused) return;
     player.bombs--; player.bombCd = 0.6; updateBombHUD();
     dropBombFrom(v, PT, me);
+    if (netClient()) netUp({ t: 'bomb' });
     playBell(1046, 0.08);
   }
   function dropBombFrom(v, team, owner) {
-    var g = makeGift(0.9, BULB_COLORS[Math.floor(Math.random() * 5)]);
-    var gl = glowSprite(0xffd27a, 2.2, 0.8); gl.position.y = 0.4; g.add(gl);
-    g.position.set(v.x, v.y + 0.2, v.z); scene.add(g);
-    bombs.push({ mesh: g, x: v.x, y: v.y + 0.2, z: v.z, vx: v.vx * 0.9, vy: v.vy * 0.5 - 2, vz: v.vz * 0.9, spin: rand(-3, 3), team: team, owner: owner });
+    dropBombAt(v.x, v.y + 0.2, v.z, v.vx * 0.9, (v.vy || 0) * 0.5 - 2, v.vz * 0.9, team, owner);
   }
   var flashPools = [];
   function explode(x, y, z, R, maxDmg, team, byPlayer, crater, owner, src) {
@@ -4075,6 +4096,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   }
   function damageUnit(u, dmg, team, byPlayer, owner, src) {
     if (u.dead) return;
+    if (NET.role === 'client') { if (byPlayer) showHitmarker(); return; } // the host decides hits
     if (u.hasFlag) dmg *= 0.5;
     u.hp -= dmg; u.hitT = 0.25;
     if (byPlayer) showHitmarker();
@@ -4082,6 +4104,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       u.dead = true; u.deadT = 0; u.bar.sprite.visible = false;
       spawnSnowSplash(u.x, u.y + 1.0, u.z, 14);
       if (u.who) { u.who.deaths++; u.who.level = 0; u.who.streak = 0; u.who.upg = {}; }
+      if (u.net) netTo(u.net.id, { t: 'died', rt: 6.5 });
       if (u.special) { u.special = null; aiHoldWeapon(u, null); }
       if (owner) { owner.kills++; if (owner === me) onPlayerKill(); else aiOnKill(owner); }
       scoreKill(team);
@@ -4089,7 +4112,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     }
   }
   function damagePlayer(dmg, owner, src) {
-    if (player.dead || game.over || player.shieldT > 0) return;
+    if (player.dead || game.over || player.shieldT > 0 || NET.role === 'client') return;
     if (player.hasFlag) dmg *= 0.7;
     player.hp -= dmg;
     var vig = $('damage-vignette'); vig.style.opacity = '1';
@@ -4098,13 +4121,13 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   }
   function vehTeam(v) { return v.driver === 'player' ? PT : (v.driver ? v.driver.team : v.team); }
   function damageVehicle(v, dmg, owner, team) {
-    if (v.dead) return;
+    if (v.dead || NET.role === 'client') return;
     v.hp -= dmg;
     if (v === player.vehicle) { var vig = $('damage-vignette'); vig.style.opacity = '0.6'; setTimeout(function () { vig.style.opacity = '0'; }, 150); }
     if (v.hp <= 0) {
       v.dead = true; v.respawnT = 20;
       explode(v.x, v.y + 1, v.z, 6, 30, 'none', false, 0);
-      addKillFeed(VEH[v.type].label + ' destroyed! Back at base in 20s', false);
+      addKillFeed(VEH[v.type].label + ' destroyed! Back at base in 20s', false, 1);
       if (v === player.vehicle) { exitVehicle(true); damagePlayer(25, owner, 'boom'); }
       else if (v.driver && v.driver !== 'player') { var du = v.driver; aiDismount(du); damageUnit(du, 30, team || 'none', owner === me, owner, 'boom'); }
       v.driver = null; v.claimed = null;
@@ -4143,6 +4166,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function seatOffset(ch) { return ch.rig ? (ch.rig.type === 'biped' ? -ch.rig.hipsH * 0.92 : -0.3) : -1.0; }
   function enterVehicle(v) {
     if (player.hasFlag) { flashPrompt("Can't ride while carrying the flag"); return; }
+    if (NET.role === 'client' && !NET.applying) { netUp({ t: 'enter', vi: vehicles.indexOf(v) }); return; } // the host hands out seats
     player.vehicle = v; v.driver = 'player'; v.idleT = 0; tipDone('ride');
     if (player.char) {
       var ch = player.char, rig = ch.rig;
@@ -4173,6 +4197,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
 
   function vehicleGround(v) { var g = supportHeight(v.x, v.z, v.y, 0.4); return g < WATER_Y - 0.35 ? WATER_Y - 0.35 : g; }
   function updateVehicle(v, dt) {
+    if (NET.role === 'client' && v !== player.vehicle) { clientVehicleStep(v, dt); return; }
+    if (v.netDrive) { hostNetVehicle(v, dt); return; }
     if (v.dead) {
       v.respawnT -= dt;
       if (v.respawnT <= 0) { resetVehicle(v); }
@@ -4331,6 +4357,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   }
   function aiDismount(u) {
     var v = u.vehicle; if (!v) return;
+    if (u.net) { v.netDrive = false; netTo(u.net.id, { t: 'vout' }); }
     if (v.driver === u) v.driver = null;
     u.vehicle = null; v.idleT = 0;
     var rx = Math.cos(v.yaw), rz = -Math.sin(v.yaw), off = VEH[v.type].radius + 1.2;
@@ -4775,6 +4802,637 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   });
   loadProfile(); renderProfileStrip();
 
+  // =========================================================
+  // Online play — the room host's browser runs the match (bots, scoring, hits); everyone else sends
+  // their own movement/throws and draws the host's world. A tiny relay server only does matchmaking
+  // and forwards messages (server/server.js). If anything fails the game simply continues with bots.
+  // =========================================================
+  var NET_VER = '1';
+  var NET_URL = (function () {
+    var q = /[?&]server=([^&]+)/.exec(location.search);
+    return q ? decodeURIComponent(q[1]) : 'wss://santa-vs-rudolph.onrender.com/ws';
+  })();
+  var NET_OFF = /[?&]offline=1/.test(location.search);
+  var NET = { ws: null, role: 'off', id: 0, host: 0, peers: {}, seed: 1, deforms: [], snapT: 0, sendT: 0, kdT: 0, badgeT: 0, nidSeq: 1, hostNid: 0, myNid: 0, myRi: 0, applying: false, quiet: false, thQ: [], lastSnapAt: 0 };
+  function netPeerCount() { return Object.keys(NET.peers).length; }
+  function netOn() { return NET.role === 'host' || NET.role === 'client'; }
+  function netClient() { return NET.role === 'client'; }
+  function netHost() { return NET.role === 'host'; }
+  function seededRandom(seed) { var s = seed >>> 0; return function () { s = (s + 0x6D2B79F5) >>> 0; var t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  function withSeed(seed, fn) { var R = Math.random; Math.random = seededRandom(seed); try { fn(); } finally { Math.random = R; } }
+  function q2(v) { return Math.round(v * 100) / 100; }
+  function riOf(who) { return who ? roster.indexOf(who) : -1; }
+  function netRaw(obj) { var ws = NET.ws; if (ws && ws.readyState === 1) { try { ws.send(JSON.stringify(obj)); } catch (e) { } } }
+  function netAll(d) { if (netHost() && Object.keys(NET.peers).length) netRaw({ d: d }); }
+  function netTo(id, d) { if (netHost()) netRaw({ to: id, d: d }); }
+  function netUp(d) { if (netClient()) netRaw(d); }
+  // wake the (possibly sleeping) free server as soon as the page loads
+  (function () {
+    if (NET_OFF || typeof fetch === 'undefined') return;
+    try { fetch(NET_URL.replace(/^ws/, 'http').replace(/\/ws$/, '/health'), { mode: 'no-cors', cache: 'no-store' }).catch(function () { }); } catch (e) { }
+  })();
+
+  // ---------- connecting ----------
+  function setConnecting(on, text) {
+    var el = $('net-status'); if (!el) return;
+    el.classList.toggle('hidden', !on);
+    if (text) $('net-status-text').textContent = text;
+  }
+  function netPlay(team, countdown, onStart) {
+    var started = function () { if (onStart) onStart(); };
+    if (NET_OFF || typeof WebSocket === 'undefined') { startMatch(team, countdown); started(); return; }
+    if (netOn()) netLeave();
+    var done = false, ws, timer;
+    var offline = function () {
+      if (done) return; done = true; clearTimeout(timer);
+      if (ws) { ws.onclose = null; try { ws.close(); } catch (e) { } }
+      NET.ws = null; NET.role = 'off'; setConnecting(false);
+      startMatch(team, countdown); started();
+    };
+    setConnecting(true, 'Finding players…');
+    try { ws = new WebSocket(NET_URL); } catch (e) { offline(); return; }
+    timer = setTimeout(offline, 5000);
+    ws.onopen = function () { try { ws.send(JSON.stringify({ t: 'hello', v: NET_VER, nick: playerNick, side: team })); } catch (e) { offline(); } };
+    ws.onerror = function () { offline(); };
+    ws.onclose = function () { if (!done) offline(); else netLost(); };
+    ws.onmessage = function (e) {
+      var m; try { m = JSON.parse(e.data); } catch (er) { return; }
+      if (!done && m.t === 'room') {
+        NET.ws = ws; NET.id = m.you; NET.host = m.host; NET.peers = {}; NET.deforms = [];
+        if (m.host === m.you) {
+          done = true; clearTimeout(timer); NET.role = 'host'; setConnecting(false);
+          startMatch(team, countdown); started();
+        } else {
+          NET.role = 'joining';
+          try { ws.send(JSON.stringify({ t: 'join', nick: playerNick, side: team, looks: profile.skin, lvl: profile.lvl })); } catch (er) { }
+          setConnecting(true, 'Joining a match…');
+          clearTimeout(timer); timer = setTimeout(offline, 9000);
+        }
+        return;
+      }
+      if (!done && NET.role === 'joining') {
+        if (m.t === 'wait') { setConnecting(true, 'Joining the next match…'); clearTimeout(timer); timer = setTimeout(offline, 25000); return; }
+        if (m.t === 'welcome' || m.t === 'match') {
+          done = true; clearTimeout(timer); NET.role = 'client'; setConnecting(false);
+          clientStartMatch(m); started();
+          return;
+        }
+        if (m.t === 'host' && m.id === NET.id) { offline(); return; }
+        return;
+      }
+      netOnMessage(m);
+    };
+  }
+  function netLeave() {
+    var ws = NET.ws; NET.ws = null;
+    if (ws) { ws.onclose = null; ws.onmessage = null; try { ws.send(JSON.stringify({ t: 'bye' })); } catch (e) { } try { ws.close(); } catch (e) { } }
+    if (netOn() && game.started && !game.over) netTakeOver([]);
+    NET.role = 'off'; NET.peers = {}; netBadge();
+  }
+  function netLost() {
+    if (!netOn()) return;
+    var wasClient = netClient();
+    NET.ws = null;
+    if (game.started && !game.over) netTakeOver([]);
+    NET.role = 'off'; NET.peers = {}; netBadge();
+    if (wasClient) addKillFeed('Connection lost — the match continues with bots', PT === 'santa');
+  }
+  // a host that goes to the background would freeze everyone: hand the room over instead
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && netHost() && Object.keys(NET.peers).length) netLeave();
+  });
+
+  // ---------- message routing ----------
+  function netOnMessage(m) {
+    if (netHost()) {
+      if (m.t === 'from') hostOnPeer(m.f, m.d || {});
+      else if (m.t === 'pl') hostDropPeer(m.id);
+      else if (m.t === 'host' && m.id !== NET.id) { NET.host = m.id; }
+      return;
+    }
+    if (!netClient()) return;
+    switch (m.t) {
+      case 's': clientSnapshot(m); break;
+      case 'thb': (m.a || []).forEach(clientThrow); break;
+      case 'bm': if (m.f !== NET.myRi) dropBombAt(m.a[0], m.a[1], m.a[2], m.a[3], m.a[4], m.a[5], m.tm, roster[m.f] || null); break;
+      case 'df': NET.applying = true; deformTerrain(m.a[0], m.a[1], m.a[2], m.a[3]); NET.applying = false; NET.deforms.push(m.a); break;
+      case 'kl': addKillLog(roster[m.k] || null, roster[m.v] || null, m.s); break;
+      case 'kf': addKillFeed(m.x, !!m.s); break;
+      case 'died': clientDied(m); break;
+      case 'spawn': clientSpawn(m); break;
+      case 'kill': me.kills++; onPlayerKill(); break;
+      case 'gift': var gd = specialById(m.id); if (gd) giveSpecialDef(gd); break;
+      case 'vok': var vv = vehicles[m.vi]; if (vv && !player.vehicle && !player.dead) { if (vv.driver && vv.driver !== 'player') { var od = vv.driver; od.vehicle = null; worldGroup.add(od.ch.root); od.ch.seat = 0; } vv.driver = null; NET.applying = true; enterVehicle(vv); NET.applying = false; } break;
+      case 'vno': flashPrompt('Someone else got there first'); break;
+      case 'vout': if (player.vehicle) exitVehicle(true); break;
+      case 'roster': clientRoster(m.r); break;
+      case 'kd': (m.a || []).forEach(function (a, i) { if (roster[i]) { roster[i].kills = a[0]; roster[i].deaths = a[1]; } }); break;
+      case 'end': clientEnd(m); break;
+      case 'match': clientStartMatch(m); break;
+      case 'knock': player.vx += m.x || 0; player.vz += m.z || 0; break;
+      case 'kick': netLost(); break;
+      case 'host': if (m.id === NET.id) becomeHost(m.left); else NET.host = m.id; break;
+    }
+  }
+
+  // ---------- roster meta (who is human, names, teams, looks) ----------
+  function rosterMeta() {
+    return roster.map(function (r) {
+      return [r.name, r.team, r.kind || kindOf(r.team), (r.isPlayer || r.human) ? 1 : 0, r.looks || (r.isPlayer ? profile.skin : null), r.kills, r.deaths, r.isPlayer ? NET.id : (r.net ? r.net.id : 0)];
+    });
+  }
+  function hostBroadcastRoster() { netAll({ t: 'roster', r: rosterMeta() }); }
+  function sanitizeLooks(l) {
+    var out = { suit: 'suit_classic', fur: 'fur_classic', nose: 'nose_red', trail: 'trail_none' };
+    if (l && typeof l === 'object') ['suit', 'fur', 'nose', 'trail'].forEach(function (c) { var L = LOOK_BY[l[c]]; if (L && L.cat === c) out[c] = L.id; });
+    return out;
+  }
+
+  // =========================================================
+  // HOST side
+  // =========================================================
+  function hostOnPeer(id, d) {
+    var p = NET.peers[id];
+    if (d.t === 'join') { hostAddPeer(id, d); return; }
+    if (!p) return;
+    var u = p.who && p.who.unit && !p.who.unit.dead ? p.who.unit : null;
+    switch (d.t) {
+      case 'st': if (!d.dead) p.st = d; p.stAt = game.time; break;
+      case 'th': if (u) hostPeerThrow(u, d); break;
+      case 'melee': if (u) hostPeerMelee(u); break;
+      case 'bomb': if (u && u.vehicle && u.vehicle.type === 'sleigh' && u.vehicle.flying) { dropBombFrom(u.vehicle, u.team, u.who); } break;
+      case 'enter': hostPeerEnter(p, u, d.vi); break;
+      case 'exit': if (u && u.vehicle) hostPeerExit(u); break;
+      case 'spec0': if (u) { u.special = null; aiHoldWeapon(u, null); } break;
+      case 'spec': if (u && d.id) { var sd = specialById(d.id); if (sd) { u.special = { def: sd, ammo: 99, cd: 0, burst: 0, net: true }; aiHoldWeapon(u, sd.id); } } break;
+      case 'cocoa': var pk = pickups[d.i]; if (u && pk && pk.active) { pk.active = false; pk.t = 25; pk.group.visible = false; u.hp = Math.min(u.maxHp, u.hp + 45); } break;
+    }
+  }
+  function hostAddPeer(id, d) {
+    if (NET.peers[id]) return;
+    var p = NET.peers[id] = { id: id, nick: cleanNick(d.nick) || 'Elf', side: d.side === 'rudolph' ? 'rudolph' : 'santa', looks: sanitizeLooks(d.looks), st: null, who: null };
+    if (!game.started || game.over || game.menu) { netTo(id, { t: 'wait' }); return; }
+    hostSeatPeer(p);
+    netTo(id, hostMatchInfo('welcome', p));
+    hostBroadcastRoster();
+    addKillFeed(p.nick + ' joined the match', p.side === 'santa', 1);
+  }
+  // swap a bot seat for a real player
+  function hostSeatPeer(p, noSpawn) {
+    var side = p.side;
+    var cands = roster.filter(function (r) { return !r.isPlayer && !r.human && (gameMode === 'ffa' ? kindOf(r.team) === side : r.team === side); });
+    if (!cands.length) cands = roster.filter(function (r) { return !r.isPlayer && !r.human; });
+    if (!cands.length) return false;
+    cands.sort(function (a, b) { return (a.unit ? 1 : 0) - (b.unit ? 1 : 0); });
+    var e = cands[0];
+    if (e.unit) despawnUnit(e.unit);
+    e.name = p.nick; e.human = true; e.net = p; e.looks = p.looks; e.kills = 0; e.deaths = 0; e.level = 0; e.streak = 0; e.upg = {}; e.respawnT = 0; e.unit = null;
+    if (gameMode === 'ffa') { e.team = 'h' + p.id; e.kind = side; teamKind[e.team] = side; } else e.kind = e.team;
+    p.who = e;
+    if (!noSpawn) { NET.quiet = true; spawnTrooper(e); NET.quiet = false; }
+    return true;
+  }
+  function despawnUnit(u) {
+    if (u.vehicle) { var v = u.vehicle; if (v.driver === u) v.driver = null; v.netDrive = false; u.vehicle = null; }
+    flags.forEach(function (f) { if (f.carrier === u) returnFlag(f, false); });
+    if (u.ch && u.ch.root.parent) u.ch.root.parent.remove(u.ch.root);
+    if (u.bar) worldGroup.remove(u.bar.sprite);
+    if (u.tag) { worldGroup.remove(u.tag.sprite); if (u.tag.tex) u.tag.tex.dispose(); }
+    var k = aiUnits.indexOf(u); if (k >= 0) aiUnits.splice(k, 1);
+    if (u.who && u.who.unit === u) u.who.unit = null;
+  }
+  function hostDropPeer(id) {
+    var p = NET.peers[id]; if (!p) return;
+    delete NET.peers[id];
+    var e = p.who; if (!e) return;
+    addKillFeed(e.name + ' left — a bot takes over', kindOf(e.team) === 'santa', 1);
+    e.human = false; e.net = null; e.looks = undefined;
+    var u = e.unit;
+    if (u) { u.net = null; aiAdopt(u); }
+    hostBroadcastRoster();
+  }
+  // hand a remote/puppet unit to the bot AI
+  function aiAdopt(u) {
+    u.puppet = false; u.net = null;
+    if (u.vehicle) { u.vehicle.netDrive = false; u.mountT = rand(10, 30); u.state = 'ride'; u.bombT = 2.5; }
+    u.reload = rand(0.5, 1.5); u.target = null; u.targetT = 0; u.throwStop = 0; u.special = null; aiHoldWeapon(u, null);
+    if (!u.vehicle) pickGoal(u);
+  }
+  // everything needed to (re)build this match on a peer
+  function hostMatchInfo(kind, p) {
+    return {
+      t: kind, map: curMap.id, mode: gameMode, seed: NET.seed, cd: Math.max(0, game.countdown), mt: game.matchTime,
+      sc: [game.santaScore, game.rudolphScore], tk: teamKind, r: rosterMeta(), you: roster.indexOf(p.who), df: NET.deforms,
+      sp: p.who && p.who.unit ? [q2(p.who.unit.x), q2(p.who.unit.y), q2(p.who.unit.z), q2(p.who.unit.yaw)] : null
+    };
+  }
+  // called from resetMatch (host) before bots spawn: put connected players back into seats
+  function hostReseatAll() {
+    Object.keys(NET.peers).forEach(function (k) { var p = NET.peers[k]; p.who = null; p.st = null; p.stAt = 0; hostSeatPeer(p, true); });
+  }
+  function hostSendMatch() {
+    Object.keys(NET.peers).forEach(function (k) { var p = NET.peers[k]; if (p.who) netTo(p.id, hostMatchInfo('match', p)); });
+  }
+  function hostPeerThrow(u, d) {
+    var a = d.a; if (!a || a.length < 6) return;
+    var dx = a[0] - u.x, dz = a[2] - u.z; if (dx * dx + dz * dz > 400) return; // must come from the player's own position
+    var dmg = clamp(+d.dmg || 0, 0, 150), r = clamp(+d.r || 0.12, 0.05, 1.2), fx = d.fx || null;
+    var boom = d.b ? { R: clamp(+d.b.R || 0, 0, 12), dmg: clamp(+d.b.dmg || 0, 0, 160), crater: clamp(+d.b.crater || 0, 0, 7) } : null;
+    u.ch.throwT = 1;
+    throwSnowball(a[0], a[1], a[2], a[3], a[4], a[5], u.team, false, dmg, r, clamp(+d.cr || 0, 0, 7), clamp(+d.cd || 0, 0, 2.5), +d.g || 0, u.who,
+      { mat: netMat(d.s, fx), boom: boom, trail: !!d.tr, model: d.m || undefined, src: d.s || 'snow', fx: fx });
+  }
+  function netMat(src, fx) {
+    if (fx) { var fm = ballFxMat(fx); if (fm) return fm; }
+    var w = weapons[src === 'snow' ? 'single' : src] || specialById(src);
+    return (w && w.mat) || ballMat;
+  }
+  function specialById(id) { for (var i = 0; i < SPECIALS.length; i++) if (SPECIALS[i].id === id) return SPECIALS[i]; return null; }
+  function hostPeerMelee(u) {
+    var w = specialById('cane'); if (!w) return;
+    var fx = -Math.sin(u.yaw), fz = -Math.cos(u.yaw), reach = w.range;
+    u.ch.throwT = 1;
+    aiUnits.forEach(function (o) {
+      if (o === u || o.dead || o.team === u.team || o.vehicle) return;
+      var dx = o.x - u.x, dz = o.z - u.z, d = Math.hypot(dx, dz);
+      if (d > reach || Math.abs(o.y - u.y) > 2.6 || (dx * fx + dz * fz) / (d || 1) < 0.42) return;
+      damageUnit(o, w.dmg, u.team, false, u.who, 'cane'); o.vx += dx / (d || 1) * 16; o.vz += dz / (d || 1) * 16; o.hitT = 0.3;
+      if (o.net) netTo(o.net.id, { t: 'knock', x: q2(dx / (d || 1) * 12), z: q2(dz / (d || 1) * 12) });
+      spawnSnowSplash(o.x, o.y + 1.3, o.z, 8, true);
+    });
+    if (!player.dead && !player.vehicle && PT !== u.team) {
+      var px = player.x - u.x, pz = player.z - u.z, pd = Math.hypot(px, pz);
+      if (pd <= reach && Math.abs(player.y - u.y) < 2.6 && (px * fx + pz * fz) / (pd || 1) >= 0.42) { damagePlayer(w.dmg * 0.75, u.who, 'cane'); player.vx += px / (pd || 1) * 12; player.vz += pz / (pd || 1) * 12; }
+    }
+  }
+  function hostPeerEnter(p, u, vi) {
+    var v = vehicles[vi];
+    if (!u || !v || v.dead || u.vehicle || u.hasFlag || (v.driver && v.driver !== u) || !vehUsable(v, u.team) || Math.hypot(v.x - u.x, v.z - u.z) > 9) { netTo(p.id, { t: 'vno' }); return; }
+    hostMount(u, v);
+    netTo(p.id, { t: 'vok', vi: vi });
+  }
+  function hostMount(u, v) {
+    if (v.claimed && v.claimed !== u && v.claimed.vehTarget === v) { v.claimed.vehTarget = null; v.claimed.state = 'move'; }
+    u.vehicle = v; v.driver = u; v.claimed = null; v.netDrive = true; v.idleT = 0; u.mountAt = game.time;
+    v.rider.add(u.ch.root); u.ch.root.position.set(0, seatOffset(u.ch), 0); u.ch.root.rotation.set(0, 0, 0); u.ch.seat = 1;
+  }
+  function hostPeerExit(u) {
+    var v = u.vehicle; if (!v) return;
+    if (v.driver === u) v.driver = null;
+    v.netDrive = false; u.vehicle = null; v.idleT = 0;
+    worldGroup.add(u.ch.root); u.ch.seat = 0;
+  }
+  // drive a remote player's unit from the state they send
+  function netUnitStep(u, dt) {
+    var ch = u.ch, st = u.net ? u.net.st : u.snap;
+    if (u.puppet && u.snap) st = u.snap;
+    var seated = 0;
+    if (st) {
+      if (u.net) {
+        // host: the remote player is authoritative for their own movement
+        var vi = st.vi === undefined ? -1 : st.vi, v = vi >= 0 ? vehicles[vi] : null;
+        var fresh = game.time - (u.mountAt || -9) < 1.2; // their state may predate the seat being granted
+        if (u.vehicle && v !== u.vehicle && !fresh) hostPeerExit(u);
+        if (v && !u.vehicle && !v.dead && !v.driver && !u.hasFlag) hostMount(u, v);
+        if (v && u.vehicle === v) {
+          v.x = st.x; v.y = st.y; v.z = st.z; v.yaw = st.yaw; v.vx = st.dx || 0; v.vz = st.dz || 0; v.flying = !!st.fl; v.pitch = st.vp || 0; v.roll = st.vr || 0;
+          u.x = v.x; u.y = v.y + VEH[v.type].seat.y - 0.8; u.z = v.z; u.yaw = v.yaw; seated = 1;
+        } else {
+          u.x = st.x; u.y = st.y; u.z = st.z; u.yaw = st.yaw;
+        }
+        u.vx = st.dx || 0; u.vz = st.dz || 0;
+        if (st.mhp && st.mhp > u.maxHp && st.mhp <= 400) { u.hp += st.mhp - u.maxHp; u.maxHp = st.mhp; }
+        ch.move = clamp(st.mv || 0, 0, 1); ch.runK = clamp(st.rn || 0, 0, 1); ch.airK = clamp(st.air || 0, 0, 1); ch.make = st.mk ? 1 : 0;
+      } else {
+        // client: ease the puppet toward the host's latest snapshot
+        var k = 1 - Math.exp(-14 * dt), jump = Math.hypot(st.x - u.x, st.z - u.z) > 8;
+        var ox = u.x, oz = u.z;
+        u.x = jump ? st.x : u.x + (st.x - u.x) * k; u.y = jump ? st.y : u.y + (st.y - u.y) * k; u.z = jump ? st.z : u.z + (st.z - u.z) * k;
+        u.yaw = jump ? st.yaw : u.yaw + wrapAngle(st.yaw - u.yaw) * k;
+        var sp = Math.hypot(u.x - ox, u.z - oz) / Math.max(dt, 1e-3);
+        u.vx = (u.x - ox) / Math.max(dt, 1e-3); u.vz = (u.z - oz) / Math.max(dt, 1e-3);
+        ch.move = damp(ch.move || 0, sp > 0.6 ? 1 : 0, 10, dt); ch.runK = clamp(sp / 9, 0, 1) * 0.8; ch.airK = 0; ch.make = 0;
+        u.hp = st.hp; u.maxHp = st.mhp || u.maxHp;
+        var pv = st.vi >= 0 ? vehicles[st.vi] : null;
+        if (pv !== (u.vehicle || null)) {
+          if (u.vehicle) { if (u.vehicle.driver === u) u.vehicle.driver = null; worldGroup.add(ch.root); ch.seat = 0; u.vehicle = null; }
+          if (pv) { u.vehicle = pv; pv.driver = u; pv.rider.add(ch.root); ch.root.position.set(0, seatOffset(ch), 0); ch.root.rotation.set(0, 0, 0); ch.seat = 1; }
+        }
+        if (u.vehicle) seated = 1;
+        if (st.fx & 4) { u.burnT = Math.max(u.burnT || 0, 0.25); u.burnDps = 0; }
+        if (st.fx & 8) u.slowT = Math.max(u.slowT || 0, 0.25);
+        if ((st.sp || '') !== (u.heldId || '')) { u.heldId = st.sp || ''; aiHoldWeapon(u, u.heldId || null); }
+        u.hasFlagNet = !!(st.fx & 2);
+      }
+    }
+    ch.throwT = Math.max(0, (ch.throwT || 0) - dt * 3.5);
+    if (u.hitT > 0) u.hitT -= dt;
+    if (seated) {
+      poseCharacter(ch, { move: 0, run: 0, air: 0, seated: 1, throwT: ch.throwT, make: 0, time: game.time }, dt);
+    } else {
+      var bob = poseCharacter(ch, { move: ch.move || 0, run: ch.runK || 0, air: ch.airK || 0, seated: 0, throwT: ch.throwT, make: ch.make || 0, time: game.time }, dt);
+      ch.root.position.set(u.x, u.y + bob, u.z);
+      ch.root.rotation.set(u.hitT > 0 ? 0.25 * Math.sin(u.hitT * 25) : 0, u.yaw, 0, 'YXZ');
+    }
+    if (ch.nose) {
+      var pulse = 0.82 + 0.25 * Math.sin(game.time * 5 + ch.nose.phase);
+      ch.nose.sprite.scale.set(pulse, pulse, 1);
+      var dc = (u.x - camera.position.x) * (u.x - camera.position.x) + (u.z - camera.position.z) * (u.z - camera.position.z);
+      if (dc < 3600) { var nrgb = ch.nose.rainbow ? [_rbC.r, _rbC.g, _rbC.b] : (ch.nose.rgb || [0.95, 0.08, 0.06]); pushDynPool(u.x - Math.sin(u.yaw) * 1.2, u.y, u.z - Math.cos(u.yaw) * 1.2, 3.6, nrgb[0] * pulse, nrgb[1] * pulse, nrgb[2] * pulse); }
+    }
+    var bar = u.bar, showBar = u.hp < u.maxHp;
+    if (showBar) { var dcam = camera.position.distanceTo(_v1.set(u.x, u.y, u.z)); showBar = dcam < 48; if (showBar) { drawHpBar(bar, u.hp / u.maxHp, u.team); bar.sprite.position.set(u.x, u.y + 3.0, u.z); } }
+    bar.sprite.visible = showBar;
+  }
+  // host: ramming by vehicles that remote players drive (their physics runs on their device)
+  function hostNetVehicle(v, dt) {
+    var u = v.driver; if (!u || !u.net || u.vehicle !== v) { v.netDrive = false; return; }
+    var def = VEH[v.type], speed = Math.hypot(v.vx, v.vz);
+    if (speed > 7 && !v.flying) {
+      for (var j = 0; j < aiUnits.length; j++) {
+        var o = aiUnits[j]; if (o.dead || o.vehicle || o === u || o.team === u.team) continue;
+        var ux = o.x - v.x, uz = o.z - v.z, ud = Math.hypot(ux, uz);
+        if (ud < def.radius + 0.9 && Math.abs(o.y - v.y) < 2.5 && !(o.ramT > game.time)) { o.ramT = game.time + 0.6; damageUnit(o, speed * 4.5, u.team, false, u.who, 'ram'); spawnSnowSplash(o.x, o.y + 1, o.z, 10); }
+      }
+      if (PT !== u.team && !player.dead && !player.vehicle && !(player.ramT > game.time)) {
+        var pd = Math.hypot(player.x - v.x, player.z - v.z);
+        if (pd < def.radius + 0.8 && Math.abs(player.y - v.y) < 2.5) { player.ramT = game.time + 0.6; damagePlayer(speed * 2.6, u.who, 'ram'); playThud(1); game.shake = 0.5; }
+      }
+    }
+    v.root.position.set(v.x, v.y, v.z);
+    v.root.rotation.set(v.pitch || 0, v.yaw, v.roll || 0, 'YXZ');
+    v.ring.visible = false; v.glow.material.opacity = 1;
+  }
+  function dropBombAt(x, y, z, vx, vy, vz, team, owner) {
+    var g = makeGift(0.9, BULB_COLORS[Math.floor(Math.random() * 5)]);
+    var gl = glowSprite(0xffd27a, 2.2, 0.8); gl.position.y = 0.4; g.add(gl);
+    g.position.set(x, y, z); scene.add(g);
+    bombs.push({ mesh: g, x: x, y: y, z: z, vx: vx, vy: vy, vz: vz, spin: rand(-3, 3), team: team, owner: owner });
+    if (netHost() && netPeerCount()) netAll({ t: 'bm', a: [q2(x), q2(y), q2(z), q2(vx), q2(vy), q2(vz)], tm: team, f: riOf(owner) });
+  }
+  // ~12 snapshots a second to every peer
+  function hostSnapshot() {
+    var U = roster.map(function (r) {
+      if (r.isPlayer) {
+        if (player.dead) return 0;
+        var pv = player.vehicle, px = pv ? pv.x : player.x, py = pv ? pv.y : player.y, pz = pv ? pv.z : player.z;
+        var fxb = (player.hasFlag ? 2 : 0) | (player.burnT > 0 ? 4 : 0) | (player.slowT > 0 ? 8 : 0);
+        var sw = weapons[state.weaponKey];
+        return [NET.hostNid, q2(px), q2(py), q2(pz), q2(pv ? pv.yaw : player.faceYaw), Math.round(player.hp), player.maxHp, fxb, pv ? vehicles.indexOf(pv) : -1, sw && sw.special ? sw.id : ''];
+      }
+      var u = r.unit; if (!u) return 0;
+      var fx = (u.dead ? 1 : 0) | (u.hasFlag ? 2 : 0) | (u.burnT > 0 ? 4 : 0) | (u.slowT > 0 ? 8 : 0);
+      return [u.nid, q2(u.x), q2(u.y), q2(u.z), q2(u.yaw), Math.round(Math.max(0, u.hp)), u.maxHp, fx, u.vehicle ? vehicles.indexOf(u.vehicle) : -1, u.special ? u.special.def.id : ''];
+    });
+    var V = vehicles.map(function (v) { return [q2(v.x), q2(v.y), q2(v.z), q2(v.yaw), Math.round(v.hp), v.dead ? 1 : 0, v.flying ? 1 : 0, q2(v.pitch || 0), q2(v.roll || 0)]; });
+    var F = forts.map(function (f) { return [f.owner === 'santa' ? 1 : (f.owner === 'rudolph' ? 2 : 0), Math.round(f.progress * 100), f.capTeam === 'santa' ? 1 : (f.capTeam === 'rudolph' ? 2 : 0), f.contested ? 1 : 0]; });
+    var FL = flags.map(function (f) { var c = f.carrier; return [c ? (c === 'player' ? riOf(me) : riOf(c.who)) : -1, q2(f.x), q2(f.y), q2(f.z), f.dropped ? 1 : 0]; });
+    var G = gifts.map(function (g) { return [q2(g.x), q2(g.z), g.active ? 1 : 0]; });
+    var P = 0; pickups.forEach(function (p, i) { if (p.active) P |= (1 << i); });
+    netAll({ t: 's', mt: q2(game.matchTime), sc: [game.santaScore, game.rudolphScore], u: U, v: V, f: F, fl: FL, g: G, p: P });
+  }
+  function hostTick(dt) {
+    netBadgeTick(dt);
+    var n = netPeerCount();
+    if (!n) { NET.thQ.length = 0; return; }
+    if (NET.thQ.length) { netAll({ t: 'thb', a: NET.thQ }); NET.thQ = []; }
+    NET.snapT += dt;
+    if (NET.snapT >= 0.1) { NET.snapT = 0; if (game.started && !game.over) hostSnapshot(); }
+    NET.kdT += dt;
+    if (NET.kdT >= 1) { NET.kdT = 0; netAll({ t: 'kd', a: roster.map(function (r) { return [r.kills, r.deaths]; }) }); }
+    // a peer that stopped sending for a while is gone (their tab may be frozen)
+    if (game.started && !game.over) Object.keys(NET.peers).forEach(function (k) { var p = NET.peers[k]; if (!p.who) return; if (!p.stAt) p.stAt = game.time; if (game.time - p.stAt > 20) { netTo(p.id, { t: 'kick' }); hostDropPeer(p.id); } });
+  }
+
+  // host: every throw is replayed (without damage) on every other screen
+  function hostQueueThrow(ox, oy, oz, vx, vy, vz, team, radius, craterR, grav, owner, opts) {
+    if (!netPeerCount()) return;
+    var o = opts || {};
+    NET.thQ.push({ a: [q2(ox), q2(oy), q2(oz), q2(vx), q2(vy), q2(vz)], tm: team, r: radius, cr: craterR || 0, g: grav, s: o.src || 'snow', fx: o.fx || null, b: o.boom ? o.boom.R : 0, tr: o.trail ? 1 : 0, m: o.model || 0, f: riOf(owner) });
+  }
+  // client: my own throw goes to the host, which applies the damage
+  function clientSendThrow(ox, oy, oz, vx, vy, vz, damage, radius, craterR, craterD, grav, opts) {
+    var o = opts || {};
+    netUp({ t: 'th', a: [q2(ox), q2(oy), q2(oz), q2(vx), q2(vy), q2(vz)], dmg: q2(damage), r: radius, cr: craterR || 0, cd: craterD || 0, g: grav, s: o.src || 'snow', fx: o.fx || null,
+      b: o.boom ? { R: o.boom.R, dmg: o.boom.dmg, crater: o.boom.crater } : null, tr: o.trail ? 1 : 0, m: o.model || 0 });
+  }
+  function netBadge() {
+    var el = $('net-badge'); if (!el) return;
+    if (!netOn() || !game.started) { el.classList.add('hidden'); return; }
+    var n = roster.filter(function (r) { return r.isPlayer || r.human; }).length;
+    el.textContent = 'ONLINE · ' + n + (n === 1 ? ' player' : ' players');
+    el.classList.remove('hidden');
+  }
+  function netBadgeTick(dt) { NET.badgeT -= dt; if (NET.badgeT <= 0) { NET.badgeT = 1; netBadge(); } }
+
+  // =========================================================
+  // CLIENT side
+  // =========================================================
+  function clientStartMatch(m) {
+    NET.myRi = m.you;
+    resetMatch(null, m);
+    game.started = true; game.menu = false; game.over = false; game.paused = false; game.choosing = false;
+    game.countdown = m.cd || 0; game.goT = 0;
+    ['overlay', 'result', 'team-screen', 'upgrade'].forEach(function (id) { $(id).classList.add('hidden'); });
+    if (m.sp) { player.x = m.sp[0]; player.y = m.sp[1]; player.z = m.sp[2]; state.yaw = player.faceYaw = m.sp[3]; }
+    if (game.countdown <= 0) { game.goT = 1.0; setCenter('GO!', 'count'); playBell(1568, 0.08); }
+    NET.lastSnapAt = game.time; NET.badgeT = 0;
+    setConnecting(false);
+  }
+  // build the roster on a client from the host's meta list (my own seat becomes `me`)
+  function clientBuildRoster(meta, you) {
+    return meta.map(function (r, i) {
+      if (i === you) { me.kills = r[5] || 0; me.deaths = r[6] || 0; return me; }
+      return { name: r[0], team: r[1], kind: r[2], human: !!r[3], looks: r[4] || null, kills: r[5] || 0, deaths: r[6] || 0, pid: r[7] || 0, unit: null, respawnT: 0, level: 0, streak: 0, upg: {} };
+    });
+  }
+  function clientRoster(meta) {
+    meta.forEach(function (r, i) {
+      if (i === NET.myRi) return;
+      var e = roster[i];
+      if (!e) { roster[i] = { name: r[0], team: r[1], kind: r[2], human: !!r[3], looks: r[4] || null, kills: r[5], deaths: r[6], pid: r[7] || 0, unit: null, respawnT: 0, level: 0, streak: 0, upg: {} }; if (r[2]) teamKind[r[1]] = r[2]; return; }
+      var changed = e.team !== r[1] || e.human !== !!r[3] || JSON.stringify(e.looks || null) !== JSON.stringify(r[4] || null);
+      e.name = r[0]; e.human = !!r[3]; e.pid = r[7] || 0; if (r[2]) teamKind[r[1]] = r[2];
+      if (changed) { e.team = r[1]; e.kind = r[2]; e.looks = r[4] || null; if (e.unit) { despawnUnit(e.unit); } }
+      if (e.unit && e.unit.tag) e.unit.tag.key = null; // redraw the name tag
+    });
+  }
+  function clientSnapshot(m) {
+    NET.lastSnapAt = game.time;
+    game.matchTime = m.mt; game.santaScore = m.sc[0]; game.rudolphScore = m.sc[1];
+    (m.u || []).forEach(function (s, i) {
+      var who = roster[i]; if (!who) return;
+      if (i === NET.myRi) {
+        if (!s) return;
+        NET.myNid = s[0];
+        if (s[7] & 8) player.slowT = Math.max(player.slowT || 0, 0.3);
+        var hp = s[5], old = player.hp;
+        if (!player.dead) {
+          player.hp = Math.min(hp, s[6]); player.maxHp = s[6];
+          if (hp < old - 0.5) { var vig = $('damage-vignette'); vig.style.opacity = '1'; clearTimeout(clientSnapshot._t); clientSnapshot._t = setTimeout(function () { vig.style.opacity = '0'; }, 200); }
+          player.hasFlag = (s[7] & 2) ? (flags.filter(function (f) { return f.team !== PT; })[0] || null) : null;
+        }
+        return;
+      }
+      if (!s) { if (who.unit && !who.unit.dead) { who.unit.dead = true; who.unit.deadT = 0; who.unit.bar.sprite.visible = false; } return; }
+      var u = who.unit;
+      if (u && u.nid !== s[0] && !u.dead) { despawnUnit(u); u = null; }
+      if (u && u.nid !== s[0] && u.dead) u = null;
+      if (!u && !(s[7] & 1)) u = clientSpawnPuppet(who, s);
+      if (!u) return;
+      u.snap = { x: s[1], y: s[2], z: s[3], yaw: s[4], hp: s[5], mhp: s[6], fx: s[7], vi: s[8], sp: s[9] };
+      if ((s[7] & 1) && !u.dead) { u.dead = true; u.deadT = 0; u.bar.sprite.visible = false; if (u.vehicle) { if (u.vehicle.driver === u) u.vehicle.driver = null; worldGroup.add(u.ch.root); u.ch.seat = 0; u.vehicle = null; } }
+    });
+    (m.v || []).forEach(function (s, i) {
+      var v = vehicles[i]; if (!v) return;
+      v.hp = s[4];
+      if (v === player.vehicle) { if (s[5]) exitVehicle(true); else return; }
+      v.netT = { x: s[0], y: s[1], z: s[2], yaw: s[3], pitch: s[7], roll: s[8] };
+      if (!!s[5] !== v.dead) {
+        if (s[5]) {
+          v.dead = true; v.root.visible = false; v.ring.visible = false; v.claimed = null;
+          if (v.driver && v.driver !== 'player') { var dd = v.driver; dd.vehicle = null; worldGroup.add(dd.ch.root); dd.ch.seat = 0; }
+          v.driver = null;
+          explode(v.x, v.y + 1, v.z, 6, 0, 'none', false, 0);
+        } else { resetVehicle(v); v.x = s[0]; v.y = s[1]; v.z = s[2]; v.yaw = s[3]; }
+      }
+      v.flying = !!s[6];
+    });
+    (m.f || []).forEach(function (s, i) {
+      var f = forts[i]; if (!f) return;
+      var own = s[0] === 1 ? 'santa' : (s[0] === 2 ? 'rudolph' : null);
+      if (own !== f.owner) { f.owner = own; applyFortColor(f); }
+      f.progress = s[1] / 100; f.capTeam = s[2] === 1 ? 'santa' : (s[2] === 2 ? 'rudolph' : null); f.contested = !!s[3];
+    });
+    (m.fl || []).forEach(function (s, i) { var f = flags[i]; if (!f) return; f.netCarrier = s[0]; f.x = s[1]; f.y = s[2]; f.z = s[3]; f.dropped = !!s[4]; });
+    (m.g || []).forEach(function (s, i) {
+      var g = gifts[i]; if (!g) return;
+      if (g.x !== s[0] || g.z !== s[1]) { g.x = s[0]; g.z = s[1]; g.y = getTerrainHeight(g.x, g.z); }
+      g.active = !!s[2]; g.group.visible = g.active;
+    });
+    pickups.forEach(function (p, i) { var a = !!(m.p & (1 << i)); if (a !== p.active) { p.active = a; p.group.visible = a; p.t = 25; } });
+  }
+  function clientSpawnPuppet(who, s) {
+    var u = spawnTrooper(who);
+    u.puppet = true; u.nid = s[0]; u.x = s[1]; u.y = s[2]; u.z = s[3]; u.yaw = s[4]; u.hp = s[5]; u.maxHp = s[6];
+    if (u.vehTarget) { if (u.vehTarget.claimed === u) u.vehTarget.claimed = null; u.vehTarget = null; }
+    u.ch.root.position.set(u.x, u.y, u.z);
+    return u;
+  }
+  function clientVehicleStep(v, dt) {
+    if (v.dead) return;
+    var t = v.netT;
+    if (t) {
+      var k = 1 - Math.exp(-12 * dt), jump = Math.hypot(t.x - v.x, t.z - v.z) > 12;
+      v.x = jump ? t.x : v.x + (t.x - v.x) * k; v.y = jump ? t.y : v.y + (t.y - v.y) * k; v.z = jump ? t.z : v.z + (t.z - v.z) * k;
+      v.yaw = jump ? t.yaw : v.yaw + wrapAngle(t.yaw - v.yaw) * k; v.pitch = t.pitch || 0; v.roll = t.roll || 0;
+    }
+    v.root.position.set(v.x, v.y, v.z);
+    v.root.rotation.set(v.pitch || 0, v.yaw, v.roll || 0, 'YXZ');
+    v.ring.position.set(v.x, getTerrainHeight(v.x, v.z) + 0.15, v.z);
+    v.ring.visible = !v.driver && !v.dead && v.team === PT;
+    v.glow.material.opacity = v.driver ? 1 : 0.45;
+  }
+  function clientCTF(dt) {
+    flags.forEach(function (f, fi) {
+      var ci = f.netCarrier, c = ci >= 0 ? roster[ci] : null;
+      if (c === me) { f.group.position.set(player.x, player.y + 0.9, player.z); f.group.visible = state.view !== 'fps'; f.carrier = 'player'; }
+      else if (c && c.unit && !c.unit.dead) { f.group.position.set(c.unit.x, c.unit.y + 0.9, c.unit.z); f.group.visible = true; f.carrier = c.unit; }
+      else { f.carrier = null; f.group.visible = true; f.group.position.set(f.x, f.y + Math.sin(game.time * 2 + fi) * 0.12, f.z); }
+      f.cloth.rotation.y = Math.sin(game.time * 3.1 + fi) * 0.25;
+    });
+  }
+  function clientThrow(m) {
+    if (m.f === NET.myRi) return; // my own throw is already flying on my screen
+    var a = m.a, who = roster[m.f];
+    if (who && who.unit && who.unit.ch) who.unit.ch.throwT = 1;
+    throwSnowball(a[0], a[1], a[2], a[3], a[4], a[5], m.tm, false, 0, m.r, m.cr || 0, 0, m.g, who || null,
+      { mat: netMat(m.s, m.fx), boom: m.b ? { R: m.b, dmg: 0, crater: 0 } : null, trail: !!m.tr, model: m.m || undefined, src: m.s, fx: m.fx || null });
+    var dc = camera.position.distanceTo(_v1.set(a[0], a[1], a[2]));
+    if (dc < 60) { var sd = m.s && specialById(m.s); if (sd && sd.sound) playShot(sd.sound, clamp(1 - dc / 60, 0.1, 0.8)); }
+  }
+  function clientTick(dt) {
+    netBadgeTick(dt);
+    // the host stopped sending (frozen tab, crash…): carry on alone with bots rather than standing in a frozen world
+    if (game.started && !game.over && NET.lastSnapAt && game.time - NET.lastSnapAt > 12) { netLeave(); addKillFeed('Lost the host — the match continues with bots', PT === 'santa'); return; }
+    NET.sendT += dt;
+    if (NET.sendT < 1 / 15) return;
+    NET.sendT = 0;
+    if (!game.started || game.over) return;
+    if (player.dead) { netUp({ t: 'st', x: q2(player.x), y: q2(player.y), z: q2(player.z), yaw: 0, mv: 0, dead: 1 }); return; }
+    var v = player.vehicle, ch = player.char || {};
+    netUp({
+      t: 'st', x: q2(v ? v.x : player.x), y: q2(v ? v.y : player.y), z: q2(v ? v.z : player.z), yaw: q2(v ? v.yaw : player.faceYaw),
+      dx: q2(v ? v.vx : player.vx || 0), dz: q2(v ? v.vz : player.vz || 0), mv: q2(player.move || 0), rn: q2(player.run || 0), air: player.onGround ? 0 : 1,
+      mk: state.making ? 1 : 0, vi: v ? vehicles.indexOf(v) : -1, fl: v && v.flying ? 1 : 0, vp: v ? q2(v.pitch || 0) : 0, vr: v ? q2(v.roll || 0) : 0, mhp: player.maxHp
+    });
+  }
+  function clientDied(m) {
+    if (player.dead) return;
+    if (player.vehicle) exitVehicle(true);
+    player.dead = true; player.volleys = [];
+    player.deathPos = { x: player.x, y: player.y, z: player.z };
+    player.lostProg = { level: me.level, streak: me.streak || 0, upg: JSON.parse(JSON.stringify(me.upg || {})), maxHp: player.maxHp };
+    player.reviveOffered = false; player.respawnT = m.rt || 6; player.respawnTotal = player.respawnT; player.hp = 0;
+    spawnSnowSplash(player.x, player.y + 1, player.z, 20);
+    me.deaths++; player.burnT = 0; player.slowT = 0; player.hasFlag = null;
+    me.level = 0; me.streak = 0; me.upg = {}; game.pendingUpg = 0; game.choosing = false; $('upgrade').classList.add('hidden');
+    player.maxHp = 100; updateXP(); updateAmmoHUD();
+    if (weapons.special) { delete weapons.special; $('slot-special').classList.add('hidden'); switchWeapon('single'); }
+  }
+  function clientSpawn(m) {
+    spawnPlayer();
+    player.x = m.x; player.y = m.y; player.z = m.z; state.yaw = m.yaw; player.faceYaw = m.yaw;
+    if (player.char) player.char.root.visible = true;
+    setCenter('', '');
+  }
+  function clientEnd(m) {
+    game.santaScore = m.sc[0]; game.rudolphScore = m.sc[1];
+    (m.kd || []).forEach(function (a, i) { if (roster[i]) { roster[i].kills = a[0]; roster[i].deaths = a[1]; } });
+    if (!game.over) endMatch();
+    if (m.nx) { nextMapId = m.nx[0]; nextModeId = m.nx[1]; renderNextInfo(); }
+  }
+  // the host left and the server picked me: take over the simulation for everyone still here
+  function becomeHost(leftId) {
+    NET.role = 'host'; NET.host = NET.id; NET.hostNid = NET.myNid || 1;
+    var mx = 0; aiUnits.forEach(function (u) { if (u.nid > mx) mx = u.nid; }); NET.nidSeq = Math.max(NET.nidSeq, mx + 1, NET.hostNid + 1);
+    var keep = [];
+    roster.forEach(function (r) { if (!r.isPlayer && r.human && r.pid && r.pid !== leftId) keep.push(r); });
+    netTakeOver(keep);
+    hostBroadcastRoster();
+    addKillFeed('The host left — you are hosting now', PT === 'santa');
+  }
+  // turn my copy of the match into the authoritative one; `keep` = seats that stay human (still connected)
+  function netTakeOver(keep) {
+    NET.peers = {};
+    keep.forEach(function (r) { var p = NET.peers[r.pid] = { id: r.pid, nick: r.name, side: kindOf(r.team), looks: r.looks, st: null, stAt: game.time, who: r }; r.net = p; });
+    roster.forEach(function (r) {
+      if (r.isPlayer) return;
+      if (keep.indexOf(r) < 0) { r.human = false; r.net = null; }
+      if (!r.upg) r.upg = {};
+      r.respawnT = r.respawnT || rand(2, 4);
+      var u = r.unit;
+      if (!u) return;
+      if (u.dead) return;
+      if (r.net) { u.puppet = false; u.net = r.net; u.snap = null; u.hp = Math.max(1, u.hp); if (u.vehicle) u.vehicle.netDrive = true; }
+      else aiAdopt(u);
+    });
+    // flags carried by remote/puppet units keep their carrier object
+    flags.forEach(function (f) {
+      var ci = f.netCarrier;
+      if (ci === undefined) return;
+      var c = ci >= 0 ? roster[ci] : null;
+      if (c === me) { f.carrier = 'player'; player.hasFlag = f; }
+      else if (c && c.unit && !c.unit.dead) { f.carrier = c.unit; c.unit.hasFlag = f; }
+      else f.carrier = null;
+      f.netCarrier = undefined;
+      if (f.dropped && !f.returnT) f.returnT = 15;
+    });
+    gifts.forEach(function (g) { if (!g.active && !(g.t > 0)) g.t = 20; });
+    vehicles.forEach(function (v) { v.netT = null; if (v.dead && !(v.respawnT > 0)) v.respawnT = 10; });
+    netBadge();
+  }
+
   // ---- Settings (pause menu): look sensitivity, FOV, graphics, shadows, invert Y, FPS counter
   function applySettings() {
     camera.fov = settings.fov; camera.updateProjectionMatrix();
@@ -5006,7 +5664,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (ni) ni.blur();
     if (!game.ready) return;
     initAudio(); if (TOUCH) enterFullscreen();
-    startMatch(selTeam, 5); requestLock();
+    requestLock(); netPlay(selTeam, 5);
   });
   $('next-btn').addEventListener('click', function () { if (game.adPlaying) return; game.nextT = 999; cgMidgame(function () { showTeamScreen(); }); });
 
@@ -5042,6 +5700,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   var upgChoices = [];
   // ---- AI progression: bots level up on the same K.O. ladder and pick random throw upgrades
   function aiOnKill(who) {
+    if (who && who.net) { netTo(who.net.id, { t: 'kill' }); return; }
     if (!who || who.isPlayer || !who.upg) return;
     who.streak = (who.streak || 0) + 1;
     while (who.level < LEVEL_KILLS.length && who.streak >= LEVEL_KILLS[who.level]) {
@@ -5055,7 +5714,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
         if (d.id === 'heart') { u.maxHp += 25; u.hp = u.maxHp; }
         for (var s = 0; s < 12; s++) emitSpark(u.x + rand(-0.6, 0.6), u.y + rand(0.3, 2.6), u.z + rand(-0.6, 0.6), 1, 0.85, 0.3, 2.2);
       }
-      if (who.level >= 4) addKillFeed(who.name + ' leveled up: ' + d.name + ' (LV ' + (who.level + 1) + ')', who.team === 'santa');
+      if (who.level >= 4) addKillFeed(who.name + ' leveled up: ' + d.name + ' (LV ' + (who.level + 1) + ')', who.team === 'santa', 1);
     }
   }
   function aiFx(who) {
@@ -5071,6 +5730,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   }
   function aiGiveSpecial(u) {
     var def = SPECIALS[Math.floor(Math.random() * SPECIALS.length)];
+    if (u.net) { u.special = { def: def, ammo: 999, cd: 0, burst: 0, net: true }; aiHoldWeapon(u, def.id); netTo(u.net.id, { t: 'gift', id: def.id }); return; }
     u.special = { def: def, ammo: def.uses, cd: 0.5, burst: 0 };
     aiHoldWeapon(u, def.id);
     u.giftT = null; if (u.state === 'toGift') pickGoal(u);
@@ -5174,6 +5834,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   function botTag(w) { return w && !w.isPlayer && !w.human ? '<i class="bot">BOT</i>' : ''; }
   function klName(w) { if (!w) return ''; var cls = w === me ? 'me' : (w.team === PT ? 'ally' : 'enemy'); return '<span class="kl-n ' + cls + '">' + botTag(w) + escHtml(w.name) + '</span>'; }
   function addKillLog(killer, victim, src) {
+    if (NET.role === 'host' && victim) netAll({ t: 'kl', k: riOf(killer), v: riOf(victim), s: src });
     var kf = $('killfeed'); if (!kf || !victim) return;
     var item = document.createElement('div');
     item.className = 'kl-item' + ((killer === me || victim === me) ? ' mine' : '');
@@ -5183,7 +5844,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     setTimeout(function () { item.classList.add('out'); }, 5600);
     setTimeout(function () { if (item.parentNode) item.parentNode.removeChild(item); }, 6000);
   }
-  function addKillFeed(text, isSanta) {
+  function addKillFeed(text, isSanta, share) {
+    if (share && NET.role === 'host') netAll({ t: 'kf', x: text, s: isSanta ? 1 : 0 });
     var kf = $('notice-feed'), item = document.createElement('div');
     item.className = 'kf-item'; item.style.borderLeftColor = isSanta ? '#ef4444' : '#f59e0b';
     item.textContent = text; kf.appendChild(item);
@@ -5259,12 +5921,17 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   // =========================================================
   // 17. Match flow
   // =========================================================
-  function resetMatch(team) {
-    if (team === 'santa' || team === 'rudolph') playerSide = team;
+  function resetMatch(team, ni) {
+    // ni = match info from the online host (I'm joining their match); otherwise I build the match myself
+    if (ni) { nextMapId = ni.map; nextModeId = ni.mode; playerSide = ni.r[ni.you][2] === 'rudolph' ? 'rudolph' : 'santa'; }
+    else if (team === 'santa' || team === 'rudolph') playerSide = team;
+    var seed = ni ? ni.seed : ((Math.random() * 4294967296) >>> 0);
+    NET.seed = seed; NET.deforms = []; NET.thQ = []; NET.quiet = true;
     rainbowMats.length = 0; tipState.shown = {}; hideTip();
-    applyMap(MAPS[nextMapId]); gameMode = nextModeId;
+    withSeed(seed ^ 0x5bd1e995, function () { applyMap(MAPS[nextMapId]); }); gameMode = nextModeId;
     teamKind = {};
-    if (gameMode === 'ffa') { PT = 'p0'; teamKind.p0 = playerSide; } else PT = playerSide;
+    if (ni) { for (var tk in ni.tk) teamKind[tk] = ni.tk[tk]; PT = ni.r[ni.you][1]; }
+    else if (gameMode === 'ffa') { PT = 'p0'; teamKind.p0 = playerSide; } else PT = playerSide;
     player.hasFlag = null; player.lostProg = null; player.reviveOffered = false;
     if (player.vehicle) { player.vehicle.driver = null; player.vehicle = null; }
     snowballs.forEach(function (b) { scene.remove(b.mesh); }); snowballs = [];
@@ -5272,9 +5939,12 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     bombs.forEach(function (b) { scene.remove(b.mesh); }); bombs = [];
     aiUnits = [];
     if (player.vehicle) { player.vehicle = null; }
-    buildWorld();
+    withSeed(seed, buildWorld); // same seed → identical world on every screen in an online match
+    if (ni && ni.df) { NET.applying = true; ni.df.forEach(function (a) { deformTerrain(a[0], a[1], a[2], a[3]); }); NET.applying = false; NET.deforms = ni.df.slice(); }
     createPlayerChar();
     me = { name: playerNick, team: PT, kind: playerSide, kills: 0, deaths: 0, isPlayer: true, level: 0, upg: {}, streak: 0 };
+    if (ni) { roster = clientBuildRoster(ni.r, ni.you); }
+    else {
     roster = [me];
     fillLobby();
     if (gameMode === 'ffa') {
@@ -5284,11 +5954,15 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       var names = lobby[t], n = t === PT ? BOTS_PER_TEAM - 1 : BOTS_PER_TEAM;
       for (var i = 0; i < n; i++) roster.push({ name: names[i], team: t, kind: t, kills: 0, deaths: 0, unit: null, respawnT: 0, level: 0, streak: 0, upg: {} });
     });
+    if (NET.role === 'host') hostReseatAll();
     roster.forEach(function (b) { if (!b.isPlayer) spawnTrooper(b); });
+    }
+    NET.quiet = false;
     delete weapons.special; $('slot-special').classList.add('hidden');
     player.maxHp = 100; player.hp = 100; player.volleys = [];
     switchWeapon('single'); spawnPlayer();
     game.santaScore = 0; game.rudolphScore = 0; game.matchTime = 0; game.over = false; game.pendingUpg = 0; game.choosing = false;
+    if (ni) { game.santaScore = ni.sc[0]; game.rudolphScore = ni.sc[1]; game.matchTime = ni.mt || 0; }
     player.bombs = 4; updateBombHUD();
     hudCache = {}; updateXP(); updateAmmoHUD();
   }
@@ -5319,6 +5993,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       });
     }
     rollNext(false);
+    if (NET.role === 'host') netAll({ t: 'end', sc: [game.santaScore, game.rudolphScore], kd: roster.map(function (r) { return [r.kills, r.deaths]; }), nx: [nextMapId, nextModeId] });
     hideTip(); showMatchXP(awardMatchXP(res));
     $('result').classList.remove('hidden');
     if (res === 'win') { cgCall('game', 'happytime'); playBell(1046, 0.08); playBell(1318, 0.08, audioCtx ? audioCtx.currentTime + 0.15 : 0); playBell(1568, 0.08, audioCtx ? audioCtx.currentTime + 0.3 : 0); }
@@ -5335,6 +6010,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     game.countdown = countdown; game.goT = 0;
     ['overlay', 'result', 'team-screen', 'upgrade'].forEach(function (id) { $(id).classList.add('hidden'); });
     if (countdown <= 0) { game.goT = 1.0; setCenter('GO!', 'count'); playBell(1568, 0.08); }
+    if (NET.role === 'host') { hostSendMatch(); hostBroadcastRoster(); NET.badgeT = 0; }
   }
   function renderLobby() {
     ['santa', 'rudolph'].forEach(function (t) {
@@ -5354,6 +6030,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     renderLobby();
   }
   function showTeamScreen() {
+    if (NET.role !== 'off') netLeave();
+    netBadge();
     churnLobby(1 + Math.floor(Math.random() * 3)); lobbyNew = {}; renderLobby(); renderNextInfo(); renderProfileStrip(); hideTip();
     game.menu = true; game.started = false; game.over = false; game.choosing = false; game.countdown = 0;
     $('result').classList.add('hidden'); $('upgrade').classList.add('hidden'); $('team-screen').classList.remove('hidden');
@@ -5369,7 +6047,8 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (player.dead) {
       player.respawnT -= dt;
       updateDeathPanel();
-      if (player.respawnT <= 0) { spawnPlayer(); setCenter('', ''); }
+      if (NET.role === 'client') player.respawnT = Math.max(player.respawnT, 0.6); // the host tells me when I'm back
+      else if (player.respawnT <= 0) { spawnPlayer(); setCenter('', ''); }
       if (player.char) player.char.root.visible = false;
       return;
     }
@@ -5504,7 +6183,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     updateAIInner(dt); updateNameTags();
   }
   function updateAIInner(dt) {
-    for (var ri = 0; ri < roster.length; ri++) {
+    for (var ri = 0; ri < roster.length && NET.role !== 'client'; ri++) {
       var bot = roster[ri];
       if (bot.isPlayer || bot.unit) continue;
       bot.respawnT -= dt;
@@ -5521,7 +6200,18 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
         ch.root.rotation.set(-fall * 1.45, u.yaw, 0, 'YXZ');
         ch.root.position.set(u.x, u.y - smoothstep(0.9, 1.6, u.deadT) * 1.6, u.z);
         if (u.deadT > 1.0 && !u.poofed) { u.poofed = true; spawnSnowSplash(u.x, u.y + 0.4, u.z, 10); }
-        if (u.deadT > 1.6) { worldGroup.remove(ch.root); worldGroup.remove(u.bar.sprite); if (u.tag) { worldGroup.remove(u.tag.sprite); u.tag.tex.dispose(); } aiUnits.splice(n, 1); u.who.unit = null; u.who.respawnT = rand(3.5, 5.5); }
+        if (u.deadT > 1.6) { worldGroup.remove(ch.root); worldGroup.remove(u.bar.sprite); if (u.tag) { worldGroup.remove(u.tag.sprite); u.tag.tex.dispose(); } aiUnits.splice(n, 1); if (u.who.unit === u) u.who.unit = null; u.who.respawnT = rand(3.5, 5.5); }
+        continue;
+      }
+      if (u.net || u.puppet) {
+        // real players (host) / everyone (client): position comes from the network, not from the AI
+        if (u.burnT > 0) {
+          u.burnT -= dt; if (u.net) damageUnit(u, u.burnDps * dt, u.burnTeam || enemyOf(u.team), false, u.burnBy || null, 'fire');
+          for (var nbf = 0; nbf < 2; nbf++) if (Math.random() < dt * 22) emitSpark(u.x + rand(-0.45, 0.45), u.y + rand(0.3, 2.2), u.z + rand(-0.45, 0.45), 1, nbf ? 0.7 : 0.42, nbf ? 0.18 : 0.08, 2.5);
+          if (u.dead) continue;
+        }
+        if (u.slowT > 0) { u.slowT -= dt; if (Math.random() < dt * 6) emitSpark(u.x + rand(-0.5, 0.5), u.y + rand(0.3, 2), u.z + rand(-0.5, 0.5), 0.55, 0.85, 1, 0.6); }
+        netUnitStep(u, dt);
         continue;
       }
       // --- choose target
@@ -5812,8 +6502,15 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
   var scoreTimer = 0;
   function updateForts(dt) {
     var myForts = 0, near = null;
+    var fCl = NET.role === 'client';
     forts.forEach(function (f) {
       var sC = 0, rC = 0;
+      if (fCl) {
+        if (!player.dead) { var cpx = player.vehicle ? player.vehicle.x : player.x, cpz = player.vehicle ? player.vehicle.z : player.z; if (Math.hypot(cpx - f.x, cpz - f.z) < 13.5) near = f; }
+        if (f.owner === PT) myForts++;
+        f.flag.rotation.y = Math.sin(game.time * 2 + f.id) * 0.15;
+        return;
+      }
       if (!player.dead) {
         var px = player.vehicle ? player.vehicle.x : player.x, pz = player.vehicle ? player.vehicle.z : player.z;
         var pyAbove = player.vehicle ? player.vehicle.y - f.y : 0;
@@ -5828,7 +6525,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
         f.progress += dt * (0.22 + 0.06 * Math.min(4, Math.abs(sC - rC)));
         if (f.progress >= 1) {
           f.owner = lead; f.progress = 0; f.capTeam = null; applyFortColor(f);
-          addKillFeed(f.name + (lead === 'santa' ? ' captured by Team Santa!' : ' taken by Team Rudolph!'), lead === 'santa');
+          addKillFeed(f.name + (lead === 'santa' ? ' captured by Team Santa!' : ' taken by Team Rudolph!'), lead === 'santa', 1);
           if (lead === 'santa') playBell(1046, 0.08); else playThud(0.6);
         }
       } else if (!lead && f.progress > 0) f.progress = Math.max(0, f.progress - dt * 0.1);
@@ -5837,7 +6534,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       f.flag.rotation.y = Math.sin(game.time * 2 + f.id) * 0.15;
     });
     scoreTimer += dt;
-    if (scoreTimer >= 1.0) {
+    if (scoreTimer >= 1.0 && !fCl) {
       scoreTimer = 0;
       forts.forEach(function (f) { if (f.owner === 'santa') game.santaScore += 2; else if (f.owner === 'rudolph') game.rudolphScore += 2; });
     }
@@ -5887,8 +6584,10 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     }
   }
   function updateGifts(dt) {
+    var gCl = NET.role === 'client';
     gifts.forEach(function (p) {
       if (!p.active) {
+        if (gCl) return;
         p.t -= dt;
         if (p.t <= 0) { var s = giftSpot(); p.x = s.x; p.y = s.y; p.z = s.z; p.active = true; p.group.visible = true; }
         return;
@@ -5896,6 +6595,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       p.group.rotation.y += dt * 1.3;
       p.group.position.set(p.x, p.y + 1.4 + Math.sin(game.time * 2.2 + p.phase) * 0.25, p.z);
       pushDynPool(p.x, p.y, p.z, 4.5, 0.7, 0.55, 0.2);
+      if (gCl) return; // the host hands out gifts
       var px = player.vehicle ? player.vehicle.x : player.x, pz = player.vehicle ? player.vehicle.z : player.z, py = player.vehicle ? player.vehicle.y : player.y;
       if (!player.dead && Math.hypot(px - p.x, pz - p.z) < 2.0 && Math.abs(py - p.y) < 3) {
         p.active = false; p.t = 30; p.group.visible = false;
@@ -5920,6 +6620,7 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
       pushDynPool(p.x, p.y, p.z, 4, 0.6, 0.38, 0.18);
       if (!player.dead && !player.vehicle && Math.hypot(player.x - p.x, player.z - p.z) < 1.7 && Math.abs(player.y - p.y) < 2.5) {
         p.active = false; p.t = 25; p.group.visible = false;
+        if (NET.role === 'client') netUp({ t: 'cocoa', i: pickups.indexOf(p) });
         player.hp = Math.min(player.maxHp, player.hp + 45);
         Object.keys(weapons).forEach(function (k) { if (!weapons[k].special) weapons[k].ammo = weapons[k].maxAmmo; }); state.making = false; updateAmmoHUD();
         playBell(880, 0.07); playBell(1318, 0.05, audioCtx ? audioCtx.currentTime + 0.1 : 0);
@@ -6061,7 +6762,9 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     game.time += dt;
     waterU.uTime.value = game.time; waterU.uFogDensity.value = scene.fog.density; skyMat.uniforms.uTime.value = game.time;
     musicTick(); tickRainbow();
-    var live = game.ready && game.started && !game.paused && !game.over && !game.adPlaying;
+    if (NET.role === 'host') hostTick(dt); else if (NET.role === 'client') clientTick(dt);
+    // online, the match keeps going behind the pause menu (other people are still playing)
+    var live = game.ready && game.started && (!game.paused || NET.role === 'client' || (NET.role === 'host' && netPeerCount() > 0)) && !game.over && !game.adPlaying;
     if (live && game.countdown > 0) {
       game.countdown -= dt;
       if (game.countdown > 0) setCenter(Math.ceil(game.countdown) + '<small>' + curMap.name + ' · ' + MODES[gameMode].name + '<br>' + (gameMode === 'ffa' ? 'Free-for-All' : teamName(PT)) + ' · ' + MODES[gameMode].go + '</small>', 'count');
@@ -6073,18 +6776,19 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     if (game.over && !game.menu && !game.adPlaying) {
       game.nextT -= dt;
       setText('next-timer', 'Next: ' + MAPS[nextMapId].name + ' · ' + MODES[nextModeId].name + ' in ' + Math.max(0, Math.ceil(game.nextT)) + 's');
-      if (game.nextT <= 0) { game.nextT = 999; cgMidgame(function () { if (game.over && !game.menu) { startMatch(playerSide, 0); requestLock(); } }); }
+      if (game.nextT <= 0 && NET.role === 'client') game.nextT = 0; // wait for the host's next match
+      else if (game.nextT <= 0) { game.nextT = 999; cgMidgame(function () { if (game.over && !game.menu) { startMatch(playerSide, 0); requestLock(); } }); }
     }
     if (running) {
       game.matchTime += dt;
-      if (game.matchTime >= MATCH_TIME) { game.matchTime = MATCH_TIME; endMatch(); }
+      if (game.matchTime >= MATCH_TIME) { game.matchTime = MATCH_TIME; if (NET.role !== 'client') endMatch(); }
       updatePlayer(dt);
       vehicles.forEach(function (v) { updateVehicle(v, dt); });
       updateAI(dt);
       updateProjectiles(dt);
       updatePredictor();
       if (gameMode === 'conquest') updateForts(dt);
-      if (gameMode === 'ctf') updateCTF(dt);
+      if (gameMode === 'ctf') { if (NET.role === 'client') clientCTF(dt); else updateCTF(dt); }
       updateModeHUD();
       checkModeEnd();
       updatePickups(dt);
@@ -6228,9 +6932,10 @@ var EMBEDDED_ASSETS = {"santa_fbx": "S2F5ZGFyYSBGQlggQmluYXJ5ICAAGgDoHAAA3AcAAAA
     var go = function () {
       var team = Math.random() < 0.5 ? 'santa' : 'rudolph';
       selTeam = team; document.querySelectorAll('.team-card').forEach(function (c) { c.classList.toggle('sel', c.dataset.team === team); }); renderLobby();
-      startMatch(team, 3);
-      $('overlay').querySelector('h1').textContent = 'Ready?';
-      setPaused(true); $('start-label').textContent = 'Play';
+      netPlay(team, 3, function () {
+        $('overlay').querySelector('h1').textContent = 'Ready?';
+        setPaused(true); $('start-label').textContent = 'Play';
+      });
     };
     var U = CG.sdk && CG.sdk.user;
     if (U && U.getUser) {
